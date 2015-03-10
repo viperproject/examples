@@ -10,13 +10,22 @@ predicate Valid(this: Ref) {
   (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].next)) &&
   (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].prev)) &&
   (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].value)) &&
+  /* [2015-03-10 Malte] I pulled out the first conjunct because it had an
+   * unexpected effect on the triggers generated for the forall: With the
+   * conjunct, the computed trigger sets are stricter then those computed
+   * for the quantifier without the first conjunct. The stricter triggers
+   * prevent Z3 from showing, at the beginning of addBefore, that
+   * n.prev in this.nodes, which is in turn necessary to show that
+   * n.prev != null.
+   */
   (forall i: Int :: i in [0..|this.nodes|) ==>
-    !(this.nodes[i] in this.nodes[i+1..]) &&
+    // !(this.nodes[i] in this.nodes[i+1..]) &&
     (i + 1 < |this.nodes| ==> this.nodes[i].next == this.nodes[i+1]) &&
     (0 < i ==> this.nodes[i].prev == this.nodes[i-1]) &&
     this.nodes[0].prev == this.nodes[|this.nodes|-1] &&
     this.nodes[|this.nodes|-1].next == this.nodes[0]
-  )
+  ) &&
+  (forall i: Int :: i in [0..|this.nodes|) ==> !(this.nodes[i] in this.nodes[i+1..]))
 }
 
 
