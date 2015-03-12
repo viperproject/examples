@@ -1,0 +1,59 @@
+// Unfinished version of Longest Common Prefix problem from VerifyThis@FM2012: http://fm2012.verifythis.org/challenges
+//
+// (uses quantified permissions)
+
+field val: Int
+
+domain IArray {
+  function loc(a: IArray, i: Int): Ref
+  function length(a: IArray): Int
+  
+  axiom all_diff {
+    forall a1: IArray, a2: IArray, i: Int, j: Int :: {loc(a1, i), loc(a2, j)}
+      (a1 != a2 || i != j) ==> loc(a1, i) != loc(a2, j)
+  }
+  
+  axiom length_nonneg {
+    forall a: IArray :: length(a) >= 0
+  }
+}
+
+
+method lcp(a: IArray, x :Int, y : Int) returns (n:Int)
+  requires forall i: Int :: i in [0..length(a)) ==> acc(loc(a, i).val)
+  //requires forall i: Int :: 0<=i && i<length(a) ==> acc(loc(a, i).val)
+  requires x >= 0 && y >= 0 && x < length(a) && y < length(a)
+  ensures n>=0 && x+n <= length(a) && y+n <= length(a)
+  ensures forall i: Int :: 0<=i && i<length(a) ==> acc(loc(a, i).val)
+  ensures forall k:Int :: x<=k && k < x+n ==> loc(a,k).val == loc(a,y+k-x).val
+  ensures (x+n < length(a) && y+n < length(a) ==> loc(a,x+n).val != loc(a,y+n).val)
+{
+   n := 0
+   while (x+n<length(a) && y+n<length(a) && loc(a,x+n).val == loc(a,y+n).val)
+     invariant n >= 0 && forall i: Int :: i in [0..length(a)) ==> acc(loc(a, i).val) 
+     //invariant forall j:Int :: 0<=j && j < n && (x+j) in [0..length(a)) && (y+j) in [0..length(a)) ==> loc(a,x+j).val == loc(a,y+j).val 
+     // j==k-x, k==j+x
+     invariant x+n <= length(a) && y+n <= length(a)
+     invariant forall k:Int :: x<=k && k < x+n ==> loc(a,k).val == loc(a,y+k-x).val
+   {
+     n := n + 1
+   }
+}
+
+// a[i] := 1
+// loc(a, i).val := 1
+
+// a[i] == 1
+// loc(a, i).val == 1 
+
+function f_lcp(a: IArray, x :Int, y : Int) : Int
+  requires forall i: Int :: i in [0..length(a)) ==> acc(loc(a, i).val)
+  //requires forall i: Int :: 0<=i && i<length(a) ==> acc(loc(a, i).val)
+  requires x >= 0 && y >= 0 && x < length(a) && y < length(a)
+  ensures result>=0 && x+result <= length(a) && y+result <= length(a)
+  ensures forall k:Int :: x<=k && k < x+result ==> loc(a,k).val == loc(a,y+k-x).val
+  ensures (x+result < length(a) && y+result < length(a) ==> loc(a,x+result).val != loc(a,y+result).val)
+  {
+    0
+  }
+

@@ -1,0 +1,46 @@
+// Unfinished version of checking for cyclic list (via accumulating set of elements seen) - one approach to Problem for of http://foveoos2011.cost-ic0701.org/verification-competition
+//
+// (uses magic wand support)
+
+field next: Ref
+
+predicate maybeCyclicList(l:Ref) {
+  acc(checkingList(l,Set[Ref]()))
+}
+predicate checkingList(l:Ref, s:Set[Ref]) {
+  acc(l.next) && acc(checkingList(l.next, s union Set(l)),(l.next != null && !(l in s) ? write : none))
+}
+
+method cyclic(l: Ref) returns (b:Bool)
+  requires acc(maybeCyclicList(l))
+  ensures acc(maybeCyclicList(l))
+{
+  var tmp:Ref
+  var seen:Set[Ref] 
+  unfold acc(maybeCyclicList(l))
+  unfold acc(checkingList(l,Set[Ref]()))
+  
+  seen := Set(l) 
+  tmp := l.next
+  
+  package ((acc(checkingList(tmp,seen),(tmp!=null ? write : none))) --* (folding acc(checkingList(l,Set[Ref]())) in folding acc(maybeCyclicList(l)) in acc(maybeCyclicList(l))))
+  while(tmp != null && !(tmp in seen))
+    invariant (tmp != null ==> acc(checkingList(tmp,seen))) && ((acc(checkingList(tmp,seen),(tmp!=null ? write : none))) --* acc(maybeCyclicList(l)))
+    {
+      var nxt : Ref 
+      var newseen : Set[Ref]
+      unfold checkingList(tmp,seen)
+      nxt := tmp.next
+      newseen := seen union Set(tmp)
+      
+      package acc(checkingList(nxt,newseen),(nxt!=null ? write : none)) --* (folding checkingList(tmp,seen) in applying ((acc(checkingList(tmp,seen),(tmp!=null ? write : none))) --* acc(maybeCyclicList(l))) in acc(maybeCyclicList(l)))
+      
+      assert ((acc(checkingList(nxt,newseen),(nxt!=null ? write : none))) --* acc(maybeCyclicList(l)))
+      
+      seen := newseen
+      tmp := nxt     
+      
+      assert ((acc(checkingList(tmp,seen),(tmp!=null ? write : none))) --* acc(maybeCyclicList(l)))
+    }
+   b := tmp == l
+}
