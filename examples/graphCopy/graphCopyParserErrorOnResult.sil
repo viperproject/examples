@@ -1,0 +1,152 @@
+field val: Int
+field edges: IEdges
+
+//domain IMap[K, V] {
+//  function emptyIntNode(): IMap[Int,Ref]
+//  function emptyNodeNode(): IMap[Ref, Ref]
+//  function map_lookup(map: IMap[K,V], key: K): V
+//  function insert_key_val(map: IMap[K,V], key: K, value: V): IMap[K,V]
+//  function remove(map: IMap[K,V], key: K): IMap[K,V]
+//  function keys(map: IMap[K,V]): Set[K]
+//  function has_key(map: IMap[K,V], key: K): Bool
+  
+// The code below throws an exception: "Exception in thread "main" java.lang.IllegalArgumentException: requirement failed: expected the same typ, but got V and Ref"
+//  axiom null_valus_in_empty {
+//    forall map: IMap[K,V], key: K :: map_lookup(map, key) == null
+//  }
+  
+
+//  axiom non_null_if_defined {
+//    forall map: IMap[K,V], key: K :: map_lookup(map, key) != null ==> has_key(map, key)
+//  }
+//}
+
+// Total function that returns null for those elements that are not present.
+domain IEdges {
+  function edge_lookup(e: IEdges, i: Int): Ref
+  function has_edge(e: IEdges, i: Int): Bool 
+  function insert_edge(e: IEdges, i: Int, node: Ref): IEdges
+  function edges_domain(e: IEdges): Set[Int]
+  function empty_edges(): IEdges
+  
+  // INSERTION
+  axiom inserted_edge_present {
+    forall e: IEdges, i: Int, node: Ref :: edge_lookup(insert_edge(e, i, node), i) == node
+  }
+  
+  axiom other_edges_preserved_after_insertion {
+    forall e: IEdges, i: Int, node: Ref, j: Int :: i != j ==> edge_lookup(e, j) == edge_lookup(insert_edge(e, i, node), j)
+  }
+  
+  axiom inserted_edge_defined {
+    forall e: IEdges, i: Int, node: Ref :: has_edge(e, i)
+  }
+  
+  // HAS EDGE
+  
+  axiom has_edge_complete {
+    forall e: IEdges, i: Int :: has_edge(e, i) <==> edge_lookup(e, i) != null
+  }
+  
+  // DOMAIN 
+  
+  axiom edges_domain_defined {
+    forall e: IEdges, i: Int :: i in edges_domain(e) <==> (edge_lookup(e, i) != null && has_edge(e, i))
+  }
+  
+  // EMPTY MAP
+  
+  axiom empty_edges_has_no_nodes {
+    forall i: Int :: !(has_edge(empty_edges(), i))
+  }
+  
+  axiom empty_edges_lookup {
+    forall i: Int :: edge_lookup(empty_edges(), i) == null
+  }
+  
+}
+
+domain INodeMap {
+  function lookup(node_map: INodeMap, node: Ref): Ref
+  function has_node(node_map: INodeMap, node: Ref): Bool
+  function insert(node_map: INodeMap, key_node: Ref, val_node: Ref): INodeMap
+  function map_domain(node_map: INodeMap): Seq[Ref]
+  function empty_map(): INodeMap
+  
+  // INSERTION
+  axiom inserted_node_present {
+   forall node_map: INodeMap, key_node: Ref, val_node: Ref :: lookup(insert(node_map, key_node, val_node), key_node) == val_node
+  }
+  
+  axiom other_nodes_preserved_after_insertion {
+    forall node_map: INodeMap, key_node: Ref, val_node: Ref, node: Ref :: node != key_node ==> lookup(node_map, node) == lookup(insert(node_map, key_node, val_node), node)
+  }
+  
+  axiom inserted_node_defined {
+    forall node_map: INodeMap, key_node: Ref, val_node: Ref :: has_node(insert(node_map, key_node, val_node), key_node)      
+  }
+  
+  // HAS NODE 
+  
+  axiom has_node_complete {
+    forall node_map: INodeMap, node: Ref :: has_node(node_map, node) <==> (lookup(node_map, node) != null)
+  }
+  
+  // DOMAIN
+  
+  axiom damain_is_defined {
+    forall node_map: INodeMap, key: Ref:: key in map_domain(node_map) <==> (lookup(node_map, key) != null && has_node(node_map, key))
+  }
+  
+  // EMPTY MAP
+  
+  axiom empty_map_has_no_nodes {
+    forall node: Ref :: !(has_node(empty_map(), node)) && lookup(empty_map(), node) == null
+  }
+  
+  axiom lookup_in_empty_map_is_null {
+    forall node: Ref :: lookup(empty_map(), node) == null
+  }
+}
+
+method havocInt() returns (res: Int) {}
+
+method havocEdges() returns (res: IEdges) {}
+
+
+method doCopy(this: Ref, node_map: INodeMap) returns (nodeCopy: Ref, result_node_map: INodeMap)
+  requires this != null
+  requires acc(this.val) && acc(this.edges)
+//  ensures acc(nodeCopy.val, write) && acc(nodeCopy.edges)
+//  ensures acc(this.val) && acc(this.edges)
+//  ensures nodeCopy.val == this.val 
+{
+  var x: Int
+  var S: Set[Int]
+  if (has_node(node_map, this)) {
+    nodeCopy := lookup(node_map, this)
+    result_node_map := node_map
+  } else {
+    nodeCopy := new()
+    inhale acc(nodeCopy.val, write) && acc(nodeCopy.edges, write)    
+    result_node_map := insert(node_map, this, nodeCopy)
+    nodeCopy.val := this.val    
+    S := edges_domain(this.edges)
+    while (|S| > 0) {
+      x := havocInt()
+      assume (x in S)
+      S := S setminus Set(x)
+      var newNode: Ref
+      var newResultMap: INodeMap
+      var nodeForId: Ref
+      nodeForId := edge_lookup(this.edges, x)
+      newNode, newResultMap := doCopy(nodeForId, result_node_map)
+      //newResultMap := doCopy(nodeForId, result_node_map)
+      //newNode, newResultMap := doCopy(nodeForId, result_node_map)
+    }
+  }
+}
+
+
+
+
