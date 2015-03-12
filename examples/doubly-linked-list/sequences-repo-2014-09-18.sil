@@ -1,8 +1,10 @@
+/* [2015-03-12 Malte] Verified in about 25s */
+
 // class DList
 field header: Ref
 /*ghost*/ field nodes: Seq[Ref]
 
-predicate Valid(this: Ref) {
+define ValidBody(this) (
   acc(this.header) && acc(this.nodes) && this.header in this.nodes &&
   !(null in this.nodes) &&
   0 < |this.nodes| &&
@@ -26,8 +28,9 @@ predicate Valid(this: Ref) {
     this.nodes[|this.nodes|-1].next == this.nodes[0]
   ) &&
   (forall i: Int :: i in [0..|this.nodes|) ==> !(this.nodes[i] in this.nodes[i+1..]))
-}
+)
 
+predicate Valid(this: Ref) { ValidBody(this) }
 
 method indexOf(this: Ref, e: Int) returns (index: Int, rd: Perm)
   requires this != null && acc(Valid(this));
@@ -43,20 +46,7 @@ method indexOf(this: Ref, e: Int) returns (index: Int, rd: Perm)
   continue := true;
 
   while(ptr != this.header && continue)
-    invariant acc(this.header) && acc(this.nodes) && this.header in this.nodes;
-    invariant !(null in this.nodes);
-    invariant 0 < |this.nodes|;
-    invariant this.header == this.nodes[0];
-    invariant (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].next));
-    invariant (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].prev));
-    invariant (forall i: Int :: i in [0..|this.nodes|) ==> acc(this.nodes[i].value));
-    invariant (forall i: Int :: i in [0..|this.nodes|) ==>
-                !(this.nodes[i] in this.nodes[i+1..]) &&
-                (i + 1 < |this.nodes| ==> this.nodes[i].next == this.nodes[i+1]) &&
-                (0 < i ==> this.nodes[i].prev == this.nodes[i-1]) &&
-                this.nodes[0].prev == this.nodes[|this.nodes|-1] &&
-                this.nodes[|this.nodes|-1].next == this.nodes[0]
-              );
+    invariant ValidBody(this)
     invariant ptr in this.nodes;
   {
     if(ptr.value == e) {
