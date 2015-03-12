@@ -294,6 +294,68 @@ function DLLSEG_aNodes(start : Ref,end:Ref) : Seq[Ref]
 }
 
 
+//===========================================================================
+//===========================================================================
+field DLLI_node : Ref
+field DLLI_aDLL : Ref
+
+predicate DLLI(this:Ref) {
+	this!=null &&
+	acc(this.DLLI_node,write) &&
+	this.DLLI_node!=null &&
+	acc(this.DLLI_aDLL,write) &&
+	this.DLLI_aDLL!=null
+}
+
+function DLLI_inDLL(this : Ref) : Bool
+	requires acc(DLLI(this))
+	requires acc(DLL(DLLI_DLL(this)))
+{
+	unfolding DLLI(this) in this.DLLI_node in DLL_aNodes(this.DLLI_aDLL)
+}
+	
+function DLLI_DLL(this : Ref) : Ref
+	requires acc(DLLI(this))
+{
+	unfolding DLLI(this) in this.DLLI_aDLL
+}
+
+function DLLI_index(this : Ref) : Int
+	requires acc(DLLI(this))
+	requires acc(DLL(DLLI_DLL(this)),write)
+	requires DLLI_inDLL(this)
+{
+	unfolding DLLI(this)
+		in unfolding DLL(this.DLLI_aDLL)
+		in DLLI_index_DLLSEG(this.DLLI_aDLL.DLL_head, this.DLLI_node)
+}
+
+function DLLI_index_DLLSEG(dllSeg : Ref,node:Ref) : Int
+	requires dllSeg!=null
+	requires acc(DLLSEG(dllSeg,null))
+	requires node in DLLSEG_aNodes(dllSeg,null)
+{
+	unfolding DLLSEG(dllSeg,null) in (dllSeg==node) ? 0 : DLLI_index_DLLSEG(dllSeg.DLLN_next,node)
+}
+
+method DLL_getIterator(this : Ref) returns (r : Ref)
+	requires this!=null
+	requires acc(DLL(this))
+	requires |DLL_aVal(this)| > 0
+	ensures acc(DLL(this))
+	ensures acc(DLLI(r))
+	ensures DLLI_DLL(r)==this
+	ensures DLLI_inDLL(r)
+	ensures DLLI_index(r)==0
+{
+	r := new (DLLI_node,DLLI_aDLL)
+	r.DLLI_aDLL := this
+	unfold DLL(this)
+	r.DLLI_node := this.DLL_head
+	fold DLL(this)
+	fold DLLI(r)
+}
+
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
