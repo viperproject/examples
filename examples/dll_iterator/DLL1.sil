@@ -1,0 +1,405 @@
+/////////////////////////////////////////////////////////////////////
+//LinkedListNode
+
+field DLLN_val : Int
+field DLLN_next : Ref
+field DLLN_prev : Ref
+/*
+predicate DLLN(this : Ref) 
+{
+	acc(this.DLLN_val) && 
+	acc(this.DLLN_next) && 
+	acc(this.DLLN_prev) && 
+	(this.DLLN_next!=null ==> (
+		acc(DLLN(this.DLLN_next),write)) &&
+		unfolding DLLN(this.DLLN_next) in this.DLLN_next.DLLN_prev == this
+	)
+}
+*/
+/*
+function DLLN_aVal(this : Ref) : Seq[Int]
+	requires this!=null && acc(DLLN(this),write)
+{
+	unfolding acc(DLLN(this),write) in 
+		(this.DLLN_next == null ) ? Seq(this.DLLN_val) :  Seq(this.DLLN_val) ++ DLLN_aVal(this.DLLN_next)
+}
+*/
+predicate DLLSEG(start : Ref, end:Ref)
+{
+	start!=end ==> (
+		acc(start.DLLN_val) && 
+		acc(start.DLLN_next) && 
+		acc(start.DLLN_prev) && 
+		(start.DLLN_next==null ==> end == null) &&
+		(
+			start.DLLN_next!=null ==> (
+				acc(DLLSEG(start.DLLN_next,end),write) &&
+				(start.DLLN_next!=end ==> DLLSEG_prev(start.DLLN_next,end) == start)
+			)
+		)
+	)
+}
+
+
+function DLLSEG_aVal(start : Ref,end:Ref) : Seq[Int]
+	requires start!=null 
+	requires acc(DLLSEG(start,end),wildcard)
+	ensures start!=end ==> |result|>0
+	ensures start==end ==> result == Seq[Int]()
+{
+	(start == end) ? Seq[Int]() :
+	unfolding acc(DLLSEG(start,end),wildcard) in 
+		Seq(start.DLLN_val) ++ ( (start.DLLN_next == null ) ?  Seq[Int]() :  DLLSEG_aVal(start.DLLN_next,end) )
+}
+
+function DLLSEG_last(start : Ref,end:Ref) : Ref
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),wildcard)
+	ensures result != null
+//	ensures |DLLSEG_aVal(start,end)| > 1 ==> result != start
+	ensures |DLLSEG_aVal(start,end)|==1 ==> result==start
+//	ensures result == DLLSEG_last_x(start,end,null)
+{
+//	null
+//	DLLSEG_last_x(start,end,null)
+	unfolding acc(DLLSEG(start,end),wildcard) in 
+		(start.DLLN_next == end) ? start : DLLSEG_last(start.DLLN_next,end)
+}
+/*
+function DLLSEG_last_x(start : Ref,end:Ref,x:Ref) : Ref
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),write)
+	requires x!=null ==> acc(x.DLLN_next,write)
+//	ensures acc(x.DLLN_val,write) //70/100)
+//	ensures x.DLLN_val==old(x.DLLN_val)
+//	ensures result != null
+//	ensures result == DLLSEG_last(start,end)
+	ensures x!=null ==> result != x
+
+//	ensures |DLLSEG_aVal(start,end)| > 1 ==> result != x
+//	ensures |DLLSEG_aVal(start,end)|==1 ==> result==x
+{
+	unfolding acc(DLLSEG(start,end),write) in 
+		(start.DLLN_next == end) ? start : DLLSEG_last_x(start.DLLN_next,end,x)
+}
+*/
+function DLLSEG_prev(start : Ref,end:Ref) : Ref
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),wildcard)
+{
+	unfolding acc(DLLSEG(start,end),wildcard) in 
+		start.DLLN_prev
+}
+
+/////////////////////////////////////////////////////////////////////
+//LinkedList
+field DLL_head : Ref
+field DLL_tail : Ref
+
+predicate DLL(this : Ref)
+{
+	acc(this.DLL_head) && 
+	acc(this.DLL_tail) && 
+	(
+		(this.DLL_head==null ==> (
+			this.DLL_tail == null
+		)) &&
+		(this.DLL_head!=null ==> (
+			acc(DLLSEG(this.DLL_head,null),write) &&
+			this.DLL_tail == DLLSEG_last(this.DLL_head,null) &&
+//			DLLSEG_prev(this.DLL_head,null) == null
+			true
+		))
+	)
+}
+
+function DLL_aVal(this : Ref) : Seq[Int]
+	requires this!=null && acc(DLL(this),write)
+{
+	unfolding acc(DLL(this),write) in 
+		((this.DLL_head!=null) ? DLLSEG_aVal(this.DLL_head,null) : Seq[Int]())
+}
+
+method DLL_make() returns (r:Ref)
+	ensures r!=null
+	ensures acc(DLL(r),write)
+{
+	r := new(DLL_head,DLL_tail)
+	r.DLL_head:=null
+	r.DLL_tail:=null
+	fold DLL(r)
+}
+/*
+method DLL_prepend(this : Ref,x : Int) 
+	requires this!=null
+	requires acc(DLL(this),write)
+	ensures acc(DLL(this),write)
+	ensures DLL_aVal(this) == Seq(x) ++ old(DLL_aVal(this))
+{
+	var n : Ref
+	n := new(DLLN_val,DLLN_next,DLLN_prev)
+	n.DLLN_val := x
+	n.DLLN_prev := null
+	
+	unfold DLL(this)
+	n.DLLN_next := this.DLL_head
+	var nn : Ref
+	nn := n.DLLN_next
+	if (nn!=null)
+	{
+		unfold acc(DLLSEG(nn,null),write)
+		nn.DLLN_prev := n
+		fold acc(DLLSEG(nn,null),write)
+		assert DLLSEG_last(nn,null)==old(unfolding acc(DLL(this),write) in DLLSEG_last(this.DLL_head,null))
+		assert old( DLL_aVal(this)) == DLLSEG_aVal(nn,null)
+	}else
+	{
+		this.DLL_tail := n
+	}
+	fold DLLSEG(n,null)
+	this.DLL_head := n
+	fold DLL(this)
+}
+*/
+method DLL_append(this : Ref,x : Int)
+	requires this!=null
+	requires acc(DLL(this),write)
+	ensures acc(DLL(this),write)
+	ensures DLL_aVal(this) == old(DLL_aVal(this)) ++ Seq(x)
+{
+	var n : Ref
+	n := new(DLLN_val,DLLN_next,DLLN_prev)
+	n.DLLN_val := x
+	n.DLLN_next := null
+	
+	unfold DLL(this)
+	n.DLLN_prev := this.DLL_tail
+	var nn : Ref
+	nn := n.DLLN_prev
+	if (nn!=null)
+	{
+		assert DLLSEG_aVal(this.DLL_head,null)==old(DLL_aVal(this))
+		assert nn==DLLSEG_last(this.DLL_head,null)
+		aunfold_DLLSEG_End(this.DLL_head,null,nn)
+		unfold acc(DLLSEG(nn,null),write)
+//		assume nn.DLLN_next==null
+		nn.DLLN_next := n
+//		assert this.DLL_head!=null
+		fold acc(DLLSEG(n,n),write)
+		assert DLLSEG_aVal(n,n)==Seq[Int]()
+		fold acc(DLLSEG(nn,n),write)
+
+		afold_DLLSEG_End(this.DLL_head,nn,n)
+		assert acc(DLLSEG(this.DLL_head,n),write)
+		assert DLLSEG_aVal(this.DLL_head,n)==old(DLL_aVal(this))
+//		fold acc(DLLSEG(this.DLL_head,n),write)
+		fold acc(DLLSEG(n,null),write)
+		assert DLLSEG_aVal(n,null) == Seq(x)
+//		assert DLLSEG_last(nn,null)==old(unfolding acc(DLL(this),write) in DLLSEG_last(this.DLL_head,null))
+//		assert DLLSEG_aVal(this.DLL_head,n) == old( DLL_aVal(this))
+		assert DLLSEG_aVal(n,null) == Seq(x)
+		assert DLLSEG_last(n,null) == n
+		assert acc(DLLSEG(this.DLL_head,n),write)
+		afold_DLLSEG_End(this.DLL_head,n,null)
+	}else
+	{
+		this.DLL_head := n
+		fold DLLSEG(this.DLL_head,null)
+//		afold_DLLSEG_End(this.DLL_head,nn,n)
+	}
+	this.DLL_tail := n
+	fold DLL(this)
+}
+
+method DLLSEG_last_lemma(start : Ref, end : Ref)
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),write)
+	ensures  acc(DLLSEG(start,end),write)
+	ensures DLLSEG_last(start,end)==old(DLLSEG_last(start,end))
+	ensures DLLSEG_aVal(start,end)==old(DLLSEG_aVal(start,end))
+	ensures DLLSEG_prev(start,end)==old(DLLSEG_prev(start,end))
+	ensures |DLLSEG_aVal(start,end)|>1 ==> DLLSEG_last(start,end) != start
+{
+	assert |DLLSEG_aVal(start,end)|>0
+	unfold acc(DLLSEG(start,end),write)
+	if (start.DLLN_next==end)
+	{
+		assert old(|DLLSEG_aVal(start,end)|)==1
+	}else{
+		assert |DLLSEG_aVal(start.DLLN_next,end)|>0
+		assert |old(DLLSEG_aVal(start,end))|>0
+		DLLSEG_last_lemma_x(start.DLLN_next,end,start)
+	}
+	fold acc(DLLSEG(start,end),write)
+}
+
+method DLLSEG_last_lemma_x(start : Ref, end : Ref,x:Ref)	
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),1/100)
+	requires x!=null
+	requires acc(x.DLLN_val,write)
+	ensures acc(x.DLLN_val,write)
+	ensures x.DLLN_val == old(x.DLLN_val)
+	ensures acc(DLLSEG(start,end),1/100)
+	ensures x != DLLSEG_last(start,end)
+	ensures DLLSEG_last(start,end)==old(DLLSEG_last(start,end))
+	ensures DLLSEG_aVal(start,end)==old(DLLSEG_aVal(start,end))
+	ensures DLLSEG_prev(start,end)==old(DLLSEG_prev(start,end))
+{
+	assert |DLLSEG_aVal(start,end)|>0
+	unfold acc(DLLSEG(start,end),1/100)
+	if (start.DLLN_next==end)
+	{
+		assert old(|DLLSEG_aVal(start,end)|)==1
+		assert start!=x
+		fold acc(DLLSEG(start,end),1/100)
+		assert DLLSEG_last(start,end)==start
+//		assert x!=DLLSEG_last(start,end)
+	}else{
+		assert |DLLSEG_aVal(start.DLLN_next,end)|>0
+		assert |old(DLLSEG_aVal(start,end))|>0
+		DLLSEG_last_lemma_x(start.DLLN_next,end,x)
+		assert x!=DLLSEG_last(start.DLLN_next,end)
+		fold acc(DLLSEG(start,end),1/100)
+	}
+	assert x!=DLLSEG_last(start,end)
+}
+
+//ghost
+method aunfold_DLLSEG_End(start : Ref,end : Ref, p:Ref)
+	requires start!=null
+	requires start!=end
+	requires acc(DLLSEG(start,end),write)
+	requires p == DLLSEG_last(start,end)
+	ensures acc(DLLSEG(start,p),write)
+	ensures acc(DLLSEG(p,end),write)
+	ensures start!=p ==> DLLSEG_aVal(start, p) == old(DLLSEG_aVal(start,end)[..|DLLSEG_aVal(start,end)|-1])
+	ensures DLLSEG_aVal(p,end)    == old(DLLSEG_aVal(start,end)[|DLLSEG_aVal(start,end)|-1..])
+	ensures DLLSEG_last(p,end) == p
+	ensures start!=p ==> DLLSEG_prev(start, p) == old(DLLSEG_prev(start,end))
+	ensures start==p ==> DLLSEG_prev(p,end) == old(DLLSEG_prev(start,end))
+//	ensures start!=old(DLLSEG_last(start,end)) ==> ( DLLSEG_prev(start, old(DLLSEG_last(start,end))) == old(DLLSEG_prev(start,end)) )
+{
+	DLLSEG_last_lemma(start,end)
+	var op : Ref
+	op := DLLSEG_prev(start,end)
+	var s : Seq[Int]
+	s := DLLSEG_aVal(start,end)
+	var l : Int
+	l := |s|
+	assert l>=1
+	
+	var s1 : Seq[Int]
+	var s2 : Seq[Int]
+	var s3 : Seq[Int]
+	var sp : Seq[Int]
+	s1 := s[..1]
+	assert |s1| == 1
+	sp := s[1..|s|]
+	assert |sp| == l-1
+	assert s == s1++sp
+	assert |s| == |sp|+1
+	unfold acc(DLLSEG(start,end),write)
+	assert op == start.DLLN_prev
+	if (start.DLLN_next==end)
+	{
+		fold acc(DLLSEG(start,end),write)
+		fold acc(DLLSEG(start,start),write)
+//		assume false
+	}else{
+		assert p == DLLSEG_last(start.DLLN_next,end)
+		assert start!=p
+//		assert DLLSEG_last_x(start.DLLN_next,end,start)==p
+//		assume start!=p
+		assert l>1
+		s2 := sp[..|sp|-1] //s[1..|s|-1]
+		assert |s2| == |sp|-1
+		s3 := sp[|sp|-1..] //s[l-1..]
+		assert |s3| == 1
+		assert s2++s3==sp
+		assert s == s[..|s|-1] ++ s[|s|-1..]
+		assert |s1| == 1
+		assert |s3| == 1
+		assert |s2| == |s|-2
+		assert s1 ++ s2 ++ s3 == s
+	
+		assert s1 == Seq(start.DLLN_val)
+		assert s2 ++ s3 == DLLSEG_aVal(start.DLLN_next,end)
+//		assert s == Seq(start.DLLN_val) ++ DLLSEG_aVal(start.DLLN_next,end)
+		aunfold_DLLSEG_End(start.DLLN_next,end,p)
+
+		assert p == old(DLLSEG_last(start,end))
+		assert s1 == Seq(start.DLLN_val)
+		assert s2 == DLLSEG_aVal(start.DLLN_next,p)
+		assert s3 == DLLSEG_aVal(p,end)
+		assert start.DLLN_next!=end
+		assert |s2|>=0
+		assert |s1| + |s2| > 0
+		assert |s1 ++ s2| > 0
+//		assume start!=p
+		fold acc(DLLSEG(start,p),write)
+		assert start!=p ==> op == DLLSEG_prev(start,p)
+	
+		assert start==p ==> |DLLSEG_aVal(start,p)| == 0
+		assert start==p ==> DLLSEG_aVal(start,p) == Seq[Int]()
+		assert start!=p ==> |DLLSEG_aVal(start,p)| > 0
+		assert start!=p ==> |DLLSEG_aVal(start,old(DLLSEG_last(start,end)))| > 0
+		assert start!=p ==>DLLSEG_aVal(start,old(DLLSEG_last(start,end))) == s1 ++ s2
+		assert DLLSEG_aVal(start,p) == s1 ++ s2
+		assert DLLSEG_aVal(p,end) == s3
+		assert s1 ++ s2 ++ s3 == s
+		assert p == old(DLLSEG_last(start,end))
+		assert s == old(DLLSEG_aVal(start,end)) 
+		assert 
+			start!=p ==> 
+			(
+				old(DLLSEG_aVal(start,end)) 
+					== 
+				DLLSEG_aVal(start,p) ++ DLLSEG_aVal(p,end)
+		)
+	}
+}
+
+//ghost
+method afold_DLLSEG_End(start : Ref,middle : Ref, end:Ref)
+	requires start!=null
+	requires middle!=null
+//	requires start!=middle
+	requires middle!=end
+	
+	requires acc(DLLSEG(start,middle),write)
+	requires acc(DLLSEG(middle,end),write)
+	
+	ensures acc(DLLSEG(start,end),write)
+	ensures DLLSEG_aVal(start,end) == old(DLLSEG_aVal(start,middle) ++ DLLSEG_aVal(middle,end))
+	ensures DLLSEG_last(start,end) == old(DLLSEG_last(middle,end))
+{
+	assume false;
+}
+
+
+
+//===========================================================================
+
+function DLL_aNodes(this : Ref) : Seq[Ref]
+	requires this!=null && acc(DLL(this),write)
+{
+	unfolding acc(DLL(this),write) in 
+		((this.DLL_head!=null) ? DLLSEG_aNodes(this.DLL_head,null) : Seq[Ref]())
+}
+
+function DLLSEG_aNodes(start : Ref,end:Ref) : Seq[Ref]
+	requires start!=null 
+	requires acc(DLLSEG(start,end),wildcard)
+	ensures start!=end ==> |result|>0
+	ensures start==end ==> result == Seq[Ref]()
+{
+	(start == end) ? Seq[Ref]() :
+	unfolding acc(DLLSEG(start,end),wildcard) in 
+		Seq(start) ++ ( (start.DLLN_next == null ) ?  Seq[Ref]() :  DLLSEG_aNodes(start.DLLN_next,end) )
+}
