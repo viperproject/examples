@@ -1,0 +1,19 @@
+//domain IMap[K, V] {
+//  function emptyIntNode(): IMap[Int,Ref]
+//  function emptyNodeNode(): IMap[Ref, Ref]
+//  function map_lookup(map: IMap[K,V], key: K): V
+//  function insert_key_val(map: IMap[K,V], key: K, value: V): IMap[K,V]
+//  function remove(map: IMap[K,V], key: K): IMap[K,V]
+//  function keys(map: IMap[K,V]): Set[K]
+//  function has_key(map: IMap[K,V], key: K): Bool
+  
+// The code below throws an exception: "Exception in thread "main" java.lang.IllegalArgumentException: requirement failed: expected the same typ, but got V and Ref"
+//  axiom null_valus_in_empty {
+//    forall map: IMap[K,V], key: K :: map_lookup(map, key) == null
+//  }
+  
+
+//  axiom non_null_if_defined {
+//    forall map: IMap[K,V], key: K :: map_lookup(map, key) != null ==> has_key(map, key)
+//  }
+//}

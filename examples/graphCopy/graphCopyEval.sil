@@ -1,0 +1,142 @@
+field val: Int
+field edges: IEdges
+
+
+
+// Total function that returns null for those elements that are not present.
+domain IEdges {
+  function edge_lookup(e: IEdges, i: Int): Ref
+  function has_edge(e: IEdges, i: Int): Bool 
+  function insert_edge(e: IEdges, i: Int, node: Ref): IEdges
+  function edges_domain(e: IEdges): Set[Int]
+  function empty_edges(): IEdges
+  
+  // INSERTION
+  axiom inserted_edge_present {
+    forall e: IEdges, i: Int, node: Ref :: edge_lookup(insert_edge(e, i, node), i) == node
+  }
+  
+  axiom other_edges_preserved_after_insertion {
+    forall e: IEdges, i: Int, node: Ref, j: Int :: i != j ==> edge_lookup(e, j) == edge_lookup(insert_edge(e, i, node), j)
+  }
+  
+  axiom inserted_edge_defined {
+    forall e: IEdges, i: Int, node: Ref :: has_edge(e, i)
+  }
+  
+  // HAS EDGE
+  
+  axiom has_edge_complete {
+    forall e: IEdges, i: Int :: has_edge(e, i) <==> edge_lookup(e, i) != null
+  }
+  
+  // DOMAIN 
+  
+  axiom edges_domain_defined {
+    forall e: IEdges, i: Int :: i in edges_domain(e) <==> (edge_lookup(e, i) != null && has_edge(e, i))
+  }
+  
+  // EMPTY MAP
+  
+  axiom empty_edges_has_no_nodes {
+    forall i: Int :: !(has_edge(empty_edges(), i))
+  }
+  
+  axiom empty_edges_lookup {
+    forall i: Int :: edge_lookup(empty_edges(), i) == null
+  }
+  
+}
+
+domain INodeMap {
+  function lookup(node_map: INodeMap, node: Ref): Ref
+  function has_node(node_map: INodeMap, node: Ref): Bool
+  function insert(node_map: INodeMap, key_node: Ref, val_node: Ref): INodeMap
+  function map_domain(node_map: INodeMap): Seq[Ref]
+  function empty_map(): INodeMap
+  
+  // // BIJECTIVE
+
+  // axiom node_map_is_injective {
+    // forall node_map: INodeMap, node_1: Ref, node_2: Ref :: 
+      // node_1 in map_domain(node_map) &&
+      // node_2 in map_domain(node_map) &&
+      // node_1 != node_2 
+        // ==> lookup(node_map, node_1) != lookup(node_map, node_2)
+  // }
+  
+  // axiom node_map_is_surjective {
+    // forall node_map: INodeMap, node_1: Ref, node_2: Ref :: 
+      // node_1 in map_domain(node_map) &&
+      // node_2 in map_domain(node_map) &&
+      // node_1 == node_2 
+        // ==> lookup(node_map, node_1) == lookup(node_map, node_2)
+  // }
+  
+  // INSERTION
+  axiom inserted_node_present {
+   forall node_map: INodeMap, key_node: Ref, val_node: Ref :: lookup(insert(node_map, key_node, val_node), key_node) == val_node
+  }
+  
+  axiom other_nodes_preserved_after_insertion {
+    forall node_map: INodeMap, key_node: Ref, val_node: Ref, node: Ref :: node != key_node ==> lookup(node_map, node) == lookup(insert(node_map, key_node, val_node), node)
+  }
+  
+  axiom inserted_node_defined {
+    forall node_map: INodeMap, key_node: Ref, val_node: Ref :: has_node(insert(node_map, key_node, val_node), key_node)      
+  }
+  
+  // HAS NODE 
+  
+  axiom has_node_complete {
+    forall node_map: INodeMap, node: Ref :: has_node(node_map, node) <==> (lookup(node_map, node) != null)
+  }
+  
+  // DOMAIN
+  
+  axiom damain_is_defined {
+    forall node_map: INodeMap, key: Ref:: key in map_domain(node_map) <==> (lookup(node_map, key) != null && has_node(node_map, key))
+  }
+  
+  // EMPTY MAP
+  
+  axiom empty_map_has_no_nodes {
+    forall node: Ref :: !(has_node(empty_map(), node)) && lookup(empty_map(), node) == null
+  }
+  
+  axiom lookup_in_empty_map_is_null {
+    forall node: Ref :: lookup(empty_map(), node) == null
+  }
+  
+  // LOOKUP
+  
+  axiom lookup_nonempty_in_domain {
+    forall node_map: INodeMap, node: Ref :: node in map_domain(node_map) ==> lookup(node_map, node) != null
+  }
+}
+
+method havocInt() returns (res: Int) {}
+
+
+method eval(this: Ref, path: Seq[Int], setOfRef: Set[Ref]) returns (lastVal: Int)
+  requires this in setOfRef
+  requires forall x: Ref :: x in setOfRef ==> acc(x.val)
+  requires forall x: Ref :: x in setOfRef ==> acc(x.edges)
+  requires forall x: Ref, i: Int :: x in setOfRef && i in edges_domain(x.edges) ==> edge_lookup(x.edges, i) in setOfRef  
+{
+  if (this == null) {
+    lastVal := -1
+  } else {
+    if (|path| == 0) {
+      lastVal := this.val
+    } else {
+      lastVal := eval(edge_lookup(this.edges, path[0]), path[1 .. |path|], setOfRef)
+    }
+  }
+}
+
+
+
+
+
+

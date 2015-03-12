@@ -1,0 +1,50 @@
+field val: Int
+
+domain IArray {
+  function loc(a: IArray, i: Int): Ref
+  function length(a: IArray): Int
+  
+  axiom all_diff {
+    forall a1: IArray, a2: IArray, i: Int, j: Int :: {loc(a1, i), loc(a2, j)}
+      (a1 != a2 || i != j) ==> loc(a1, i) != loc(a2, j)
+  }
+  
+  axiom length_nonneg {
+    forall a: IArray :: length(a) >= 0
+  }
+}
+
+
+method binary_search(a: IArray, key: Int) returns (index: Int) 
+  requires forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
+  requires forall i: Int, j: Int :: 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
+  ensures -1 <= index && index < length(a)
+  ensures forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
+  ensures 0 <= index ==> loc(a, index).val == key
+  ensures -1 == index ==> (forall i: Int :: 0 <= i && i < length(a) ==> loc(a,i).val != key)
+{
+  var low: Int := 0
+  var high: Int := length(a)
+  index := -1
+  while (low < high) 
+    invariant forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
+    invariant forall i: Int, j: Int :: 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
+    invariant 0 <= low && low <= high && high <= length(a)
+    invariant forall i: Int :: {loc(a, i)}(0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key
+  {
+    var mid: Int := (low + high) \ 2
+    assert (mid <= high && low <= mid)
+    if (loc(a, mid).val < key) { 
+      var oldLow: Int := low
+      low := mid + 1
+      assert forall i: Int :: {loc(a, i)}((0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key)
+    } else {
+      if (key < loc(a, mid).val) {
+        high := mid
+      } else {
+        index := mid
+      }
+    }
+  }
+  index := -1
+}
