@@ -117,11 +117,13 @@ method DLL_prepend(this : Ref,x : Int)
 		assert DLLSEG_last(nn,null)==old(unfolding acc(DLL(this),write) in DLLSEG_last(this.DLL_head,null)) //cannot remove this assertion
 		assert old( DLL_aVal(this)) == DLLSEG_aVal(nn,null)
 		assert old( DLL_aNodes(this)) == DLLSEG_aNodes(nn,null)
+//		assume false
 	}else
 	{
 		this.DLL_tail := n
 		assert this.DLL_head!=null ==> DLLSEG_aNodes(this.DLL_head,null) == old(unfolding acc(DLL(this),write) in old(DLLSEG_aNodes(this.DLL_head,null)))
 		assert this.DLL_head!=null ==> DLL_aNodes(this) == Seq(n) ++ old(DLL_aNodes(this))
+//		assume false
 	}
 	fold DLLSEG(n,null)
 	this.DLL_head := n
@@ -364,13 +366,9 @@ function DLLSEG_index(start : Ref, end : Ref, node:Ref) : Int
 	requires acc(DLLSEG(start,end))
 	requires node in DLLSEG_aNodes(start,end)
 	ensures DLLSEG_aNodes(start,end)[0]==node ==> result==0
-	ensures result >= 0
-	ensures result < |DLLSEG_aNodes(start,end)|
 	ensures start==node ==> DLLSEG_aNodes(start,end)[result]==node
 	ensures start!=node ==> unfolding DLLSEG(start,end) in DLLSEG_aNodes(start.DLLN_next,end)[result-1]==node
-	ensures start!=node ==> unfolding DLLSEG(start,end) in ((Seq(start)++DLLSEG_aNodes(start.DLLN_next,end))[result]==node)
-	ensures start!=node ==> DLLSEG_aNodes(start,end) == unfolding DLLSEG(start,end) in Seq(start)++DLLSEG_aNodes(start.DLLN_next,end)
-	ensures start!=node ==> DLLSEG_aNodes(start,end)[result] == unfolding DLLSEG(start,end) in ((Seq(start)++DLLSEG_aNodes(start.DLLN_next,end))[result])
+	ensures start!=node ==> DLLSEG_aNodes(start,end)[result] == unfolding DLLSEG(start,end) in Seq(start)++DLLSEG_aNodes(start.DLLN_next,end)
 	ensures start!=node ==> DLLSEG_aNodes(start,end)[result]==node
 	ensures DLLSEG_aNodes(start,end)[result]==node
 	ensures forall i : Int :: (i>=0 && i<result) ==> DLLSEG_aNodes(start,end)[i] != node
