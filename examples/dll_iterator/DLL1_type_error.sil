@@ -117,11 +117,13 @@ method DLL_prepend(this : Ref,x : Int)
 		assert DLLSEG_last(nn,null)==old(unfolding acc(DLL(this),write) in DLLSEG_last(this.DLL_head,null)) //cannot remove this assertion
 		assert old( DLL_aVal(this)) == DLLSEG_aVal(nn,null)
 		assert old( DLL_aNodes(this)) == DLLSEG_aNodes(nn,null)
+//		assume false
 	}else
 	{
 		this.DLL_tail := n
 		assert this.DLL_head!=null ==> DLLSEG_aNodes(this.DLL_head,null) == old(unfolding acc(DLL(this),write) in old(DLLSEG_aNodes(this.DLL_head,null)))
 		assert this.DLL_head!=null ==> DLL_aNodes(this) == Seq(n) ++ old(DLL_aNodes(this))
+//		assume false
 	}
 	fold DLLSEG(n,null)
 	this.DLL_head := n
@@ -249,7 +251,6 @@ method merge_DLLSEG(start : Ref,middle : Ref, end:Ref)
 	
 	ensures acc(DLLSEG(start,end),write)
 	ensures DLLSEG_aVal(start,end) == old(DLLSEG_aVal(start,middle) ++ DLLSEG_aVal(middle,end))
-	ensures DLLSEG_aNodes(start,end) == old(DLLSEG_aNodes(start,middle) ++ DLLSEG_aNodes(middle,end))
 	ensures DLLSEG_last(start,end) == old(DLLSEG_last(middle,end))
 {
 	var rank : Int
@@ -268,7 +269,6 @@ method merge_DLLSEG(start : Ref,middle : Ref, end:Ref)
 		subRank2 := |DLLSEG_aVal(start,l)|
 		assert subRank2<rank
 		merge_DLLSEG(start,l,end)
-		assume false
 	}
 }
 
@@ -366,13 +366,9 @@ function DLLSEG_index(start : Ref, end : Ref, node:Ref) : Int
 	requires acc(DLLSEG(start,end))
 	requires node in DLLSEG_aNodes(start,end)
 	ensures DLLSEG_aNodes(start,end)[0]==node ==> result==0
-	ensures result >= 0
-	ensures result < |DLLSEG_aNodes(start,end)|
 	ensures start==node ==> DLLSEG_aNodes(start,end)[result]==node
 	ensures start!=node ==> unfolding DLLSEG(start,end) in DLLSEG_aNodes(start.DLLN_next,end)[result-1]==node
-	ensures start!=node ==> unfolding DLLSEG(start,end) in ((Seq(start)++DLLSEG_aNodes(start.DLLN_next,end))[result]==node)
-	ensures start!=node ==> DLLSEG_aNodes(start,end) == unfolding DLLSEG(start,end) in Seq(start)++DLLSEG_aNodes(start.DLLN_next,end)
-	ensures start!=node ==> DLLSEG_aNodes(start,end)[result] == unfolding DLLSEG(start,end) in ((Seq(start)++DLLSEG_aNodes(start.DLLN_next,end))[result])
+	ensures start!=node ==> DLLSEG_aNodes(start,end)[result] == unfolding DLLSEG(start,end) in Seq(start)++DLLSEG_aNodes(start.DLLN_next,end)
 	ensures start!=node ==> DLLSEG_aNodes(start,end)[result]==node
 	ensures DLLSEG_aNodes(start,end)[result]==node
 	ensures forall i : Int :: (i>=0 && i<result) ==> DLLSEG_aNodes(start,end)[i] != node
@@ -400,11 +396,11 @@ method DLL_getIterator(this : Ref) returns (r : Ref)
 
 method DLLI_getValue(this : Ref) returns (r :  Int)
 	requires this!=null
-	requires acc(DLLI(this),write)
-	requires acc(DLL(DLLI_DLL(this)),write)
+	requires acc(DLLI(this))
+	requires acc(DLL(DLLI_DLL(this)))
 	requires DLLI_inDLL(this)
-	ensures acc(DLLI(this),write)
-	ensures acc(DLL(DLLI_DLL(this)),write)
+	ensures acc(DLLI(this))
+	ensures acc(DLL(DLLI_DLL(this)))
 	ensures DLLI_DLL(this)!=null
 	ensures r == old(DLL_aVal(DLLI_DLL(this))[DLLI_index(this)])
 {
@@ -428,67 +424,6 @@ method DLLI_getValue(this : Ref) returns (r :  Int)
 	assert r == old(DLL_aVal(DLLI_DLL(this))[DLLI_index(this)])
 }
 
-method DLLI_next(this : Ref)
-	requires this!=null
-	requires acc(DLLI(this),write)
-	requires acc(DLL(DLLI_DLL(this)),write)
-	requires DLLI_inDLL(this)
-	requires DLLI_index(this)<|DLL_aNodes(DLLI_DLL(this))|-1
-	ensures acc(DLLI(this),write)
-	ensures acc(DLL(DLLI_DLL(this)),write)
-	ensures DLLI_inDLL(this)
-	ensures DLLI_DLL(this)!=null
-	ensures DLLI_index(this)==old(DLLI_index(this))+1
-	ensures DLL_aNodes(DLLI_DLL(this))==old(DLL_aNodes(DLLI_DLL(this)))
-	ensures DLL_aVal(DLLI_DLL(this))==old(DLL_aVal(DLLI_DLL(this)))
-{
-	assert DLLI_DLL(this)!=null
-	var i : Int
-	i := DLLI_index(this)
-	
-
-	unfold acc(DLLI(this),write)
-	unfold acc(DLL(this.DLLI_aDLL),write)
-
-	var i2 : Int
-	i2 := DLLSEG_index(this.DLLI_aDLL.DLL_head,null,this.DLLI_node)
-	assert i==i2
-	split_DLLSEG(this.DLLI_aDLL.DLL_head,this.DLLI_node,null)
-	assert DLLSEG_index(this.DLLI_node,null,this.DLLI_node)==0
-	assert i == |DLLSEG_aVal(this.DLLI_aDLL.DLL_head,this.DLLI_node)|
-	
-	unfold acc(DLLSEG(this.DLLI_node,null))
-	var o : Ref
-	o := this.DLLI_node
-	assert unfolding DLLSEG(o.DLLN_next,null) in o != o.DLLN_next
-	assert o != o.DLLN_next
-	var n : Ref
-	n := this.DLLI_node.DLLN_next
-	this.DLLI_node:=n
-	assert n in DLLSEG_aNodes(n,null)
-	var i3:Int
-	i3 := DLLSEG_index(this.DLLI_node,null,this.DLLI_node)
-	assert i3==0
-	assert this.DLLI_node!=o
-	assert this.DLLI_node==o.DLLN_next
-
-	fold acc(DLLSEG(o,null))
-
-	var i4:Int
-	i4 := DLLSEG_index(o,null,this.DLLI_node)
-	assert i4==1
-	assert i == |DLLSEG_aVal(this.DLLI_aDLL.DLL_head,o)| 
-	assume ! (n in DLLSEG_aNodes(this.DLLI_aDLL.DLL_head,o))
-	assert n in DLLSEG_aNodes(o,null)
-	merge_DLLSEG(this.DLLI_aDLL.DLL_head,o,null)
-	assert n in DLLSEG_aNodes(this.DLLI_aDLL.DLL_head,null)
-	var i5:Int
-	i5 := DLLSEG_index(this.DLLI_aDLL.DLL_head,null,this.DLLI_node)
-	assert i5==i+1
-	fold acc(DLL(this.DLLI_aDLL),write)
-	fold acc(DLLI(this),write)
-	assert DLLI_DLL(this)!=null
-}
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
