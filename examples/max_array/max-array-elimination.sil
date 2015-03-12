@@ -1,4 +1,6 @@
-    field val: Int
+// Finished solution for finding maximum in an array by elimination - Problem 1 of http://foveoos2011.cost-ic0701.org/verification-competition
+
+field val: Int
 
 domain IArray {
   function loc(a: IArray, i: Int): Ref
