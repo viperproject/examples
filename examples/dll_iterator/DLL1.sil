@@ -97,6 +97,7 @@ method DLL_prepend(this : Ref,x : Int)
 	requires acc(DLL(this),write)
 	ensures acc(DLL(this),write)
 	ensures DLL_aVal(this) == Seq(x) ++ old(DLL_aVal(this))
+	ensures exists r : Ref :: DLL_aNodes(this) == Seq(r) ++ old(DLL_aNodes(this))
 {
 	var n : Ref
 	n := new(DLLN_val,DLLN_next,DLLN_prev)
@@ -114,12 +115,18 @@ method DLL_prepend(this : Ref,x : Int)
 		fold acc(DLLSEG(nn,null),write)
 		assert DLLSEG_last(nn,null)==old(unfolding acc(DLL(this),write) in DLLSEG_last(this.DLL_head,null)) //cannot remove this assertion
 		assert old( DLL_aVal(this)) == DLLSEG_aVal(nn,null)
+		assert old( DLL_aNodes(this)) == DLLSEG_aNodes(nn,null)
+//		assume false
 	}else
 	{
 		this.DLL_tail := n
+		assert this.DLL_head!=null ==> DLLSEG_aNodes(this.DLL_head,null) == old(unfolding acc(DLL(this),write) in old(DLLSEG_aNodes(this.DLL_head,null)))
+		assert this.DLL_head!=null ==> DLL_aNodes(this) == Seq(n) ++ old(DLL_aNodes(this))
+//		assume false
 	}
 	fold DLLSEG(n,null)
 	this.DLL_head := n
+	assert DLLSEG_aNodes(this.DLL_head,null) == Seq(n) ++ old(DLL_aNodes(this))
 	fold DLL(this)
 }
 
