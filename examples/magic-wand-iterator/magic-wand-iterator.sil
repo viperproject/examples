@@ -62,7 +62,7 @@ method ListIterator_new(l : Ref) returns (this : Ref)
   {
     var cur : Ref
     var sent : Ref
-    this := new(iteratee,current,last) // ListIterator
+    this := new(iteratee,current,last) // new ListIterator(l)
     this.iteratee := l
     unfold list(l)
     this.current := l.sentinel
@@ -71,9 +71,9 @@ method ListIterator_new(l : Ref) returns (this : Ref)
     package (acc(state(cur)) --* acc(state(sent)))
     unfold state(l.sentinel)
     fold ready(this)
-    // need to check whether these specific fractions are really necessary
-    package (acc(this.iteratee,1/3) && acc(list(this.iteratee)) --* acc(this.iteratee,2/3) && l == this.iteratee && acc(list(l)))
-    wand w := (acc(this.iteratee,1/3) && acc(list(this.iteratee)) --* acc(this.iteratee,2/3) && l == this.iteratee && acc(list(l)))
+
+    package (acc(this.iteratee,1/3) --* acc(this.iteratee,2/3) && l == this.iteratee) // this is a trick - this extra wand is used as a witness for the immutability of this.iteratee (in particular, so that we can assume that it has the same value in the hypothetical package state below, by applying it).
+    wand w := (acc(this.iteratee,1/3) --* acc(this.iteratee,2/3) && l == this.iteratee)
  
     package (acc(ready(this)) --* unfolding ready(this) in folding state(this.current) in let cr == (this.current) in let st == (this.iteratee.sentinel) in applying (acc(state(cr)) --* acc(state(st))) in folding acc(list(this.iteratee)) in applying w in acc(list(l)))
   }
