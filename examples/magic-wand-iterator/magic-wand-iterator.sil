@@ -37,8 +37,8 @@ predicate readyForNext(i:Ref) {
 }
 
 predicate readyForRemove(i:Ref) {
-  acc(i.iteratee,2/3) && acc(i.iteratee.sentinel) && acc(i.last) && NODE_FIELDS(i.last) && acc(i.current) && (i.current != null ==> NODE_FIELDS(i.current) && i.current.prev == i.last &&
-  (i.current.next != null ==> acc(state(i.current.next)))) && (let lst == (i.last) in let sent == (i.iteratee.sentinel) in (acc(state(lst)) --* acc(state(sent)) && get_prev(sent) == null))
+  acc(i.iteratee,2/3) && acc(i.iteratee.sentinel) && acc(i.last) && acc(i.last.next) && acc(i.current) && (i.current != null ==> NODE_FIELDS(i.current) && i.current.prev == i.last && i.last.next == i.current &&
+  (i.current.next != null ==> acc(state(i.current.next)) && get_prev(i.current.next) == i.current)) && (let lst == (i.last) in let sent == (i.iteratee.sentinel) in (acc(lst.next) && (lst.next != null ==> acc(state(lst.next)) && get_prev(lst.next) == lst) --* acc(state(sent)) && get_prev(sent) == null))
 }
 
 method ListIterator_hasNext(this : Ref) returns (res : Bool) 
@@ -102,7 +102,13 @@ method ListIterator_next(this: Ref) returns (v : Int)
     lst := this.last
     sent := this.iteratee.sentinel 
 
-    package acc(state(cur)) && get_prev(cur) == lst --* folding state(lst) in applying w in acc(state(sent))
-    
+    package acc(lst.next) && (lst.next != null ==> acc(state(lst.next)) && get_prev(lst.next) == lst) --* folding state(lst) in applying w in acc(state(sent)) && get_prev(sent) == null
     fold readyForRemove(this)
+    
+    package acc(readyForRemove(this)) --* unfolding readyForRemove(this) in 
+      (let lt == (this.last) in let st == (this.iteratee.sentinel) in folding acc(state(lt.next)) in
+        acc(lt.next) && (lt.next != null ==> acc(state(lt.next)) && get_prev(lt.next) == lt)
+      //applying (acc(lt.next) && (lt.next != null ==> acc(state(lt.next)) && get_prev(lt.next) == lt) --* acc(state(st)) && get_prev(st) == null) in
+     //   acc(state(st)) && get_prev(st) == null
+      )
     }
