@@ -97,7 +97,11 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int)
   // ensures exists i: Int :: left <= i && i <= right && loc(a, i).val == elem
   ensures left <= idx && idx <= right
   ensures idx == n /* P1 */
-  ensures forall i: Int :: left <= i && i < idx   ==> loc(a, i).val   <  loc(a, idx).val /* P2 */
+  
+  /* TODO: The next two postconditions require the recursive calls to select_rec
+   * to guarantee that the array has been permutated.
+   */
+  ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <  loc(a, idx).val /* P2 */
   ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
   /* NOTE: From P1 and P2 it follows that loc(a, idx).val is the n-th smallest element */
   
@@ -115,9 +119,9 @@ assume false
     pivotIndex := partition(a, left, right, pivotIndex)
 // assert forall i: Int :: left <= i && i < pivotIndex ==> loc(a, i).val   <  loc(a, pivotIndex).val
 // assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
-    assume  forall i: Int :: left <= i && i <= right ==> (
-              exists j: Int :: left <= j && j <= right && old(loc(a, i).val) == loc(a, j).val
-            )
+    // assume  forall i: Int :: left <= i && i <= right ==> (
+              // exists j: Int :: left <= j && j <= right && old(loc(a, i).val) == loc(a, j).val
+            // )
 
     /* The pivot is in its final sorted position */
 
