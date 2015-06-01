@@ -6,12 +6,14 @@ method binary_search(array: Seq[Int], key: Int) returns (index: Int)
 {
   var low: Int := 0 
   var high: Int := |array|
+  var mid : Int
+  
   index := -1
   while (low < high)
       invariant 0 <= low && low <= high && high <= |array|
       invariant forall i: Int :: (0 <= i && i < |array| && !(low <= i && i < high)) ==> array[i] != key
   {
-    var mid: Int := (low + high) \ 2;
+    mid := (low + high) \ 2;
     if (array[mid] < key) {
       low := mid + 1;
     } else {
