@@ -1,8 +1,13 @@
-/* Peter worked on this example
-  
-  TODO
-   - try this version in Carbon and check how many of the assertions and assumptions can be removed
-   - finish the QP version
+/* Created by: Peter
+ *
+ * History:
+ *   2015-07-29 Malte
+ *     Verifies in Silicon (6ecd860a311b) in 3.6s
+ *
+ * TODO:
+ *   - try this version in Carbon and check how many of the assertions and
+ *     assumptions can be removed
+ *   - finish the QP version
 */
 
 predicate aseg(a: Array, from: Int, to: Int) {
