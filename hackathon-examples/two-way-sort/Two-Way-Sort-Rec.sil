@@ -142,6 +142,7 @@ method two_way_sort(a: Array)
 
   ensures countFalse(contents(a,0,length(a))) == old(countFalse(contents(a,0,length(a))));
 {
+  var measure: Int;     // encode termination
   var i: Int
   i := 0;
   var j : Int;
@@ -155,7 +156,6 @@ method two_way_sort(a: Array)
     invariant forall z: Int :: (0 <= z && z < length(a)-j-1 ==> contents(a, j+1, length(a))[z]);
     invariant old(countFalse(contents(a,0,length(a)))) == i + countFalse(contents(a,i,j+1));
   {
-    var measure: Int;     // encode termination
     measure := j - i;
     assert 0 <= measure;  // measure is a natural number
 
