@@ -1,5 +1,12 @@
-/* Peter send this file on 2014-09-16.
- * It results in Z3 running out of memory (using Z3 4.3.2).
+/* Created by: Peter
+ *
+ * History:
+ *   2015-07-29 Malte
+ *     Silicon (d07b47260c32) didn't terminate in a few minutes.
+ *     Z3 consumed lots of memory.
+ *     Haven't looked into it yet.
+ *   2014-09-16 Malte
+ *     Added initial snapshot sent by Peter
  */
 
 // class LinkedList
