@@ -7,17 +7,18 @@ field val: Int
 domain IArray {
   function loc(a: IArray, i: Int): Ref
   function length(a: IArray): Int
-  
+  function first(r: Ref): IArray
+  function second(r: Ref): Int
+
   axiom all_diff {
-    forall a1: IArray, a2: IArray, i: Int, j: Int :: {loc(a1, i), loc(a2, j)}
-      (a1 != a2 || i != j) ==> loc(a1, i) != loc(a2, j)
+    forall a: IArray, i: Int :: {loc(a, i)}
+      first(loc(a, i)) == a && second(loc(a, i)) == i
   }
-  
+
   axiom length_nonneg {
     forall a: IArray :: length(a) >= 0
   }
 }
-
 
 method lcp(a: IArray, x :Int, y : Int) returns (n:Int)
   requires forall i: Int :: i in [0..length(a)) ==> acc(loc(a, i).val)
