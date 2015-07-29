@@ -1,3 +1,11 @@
+/* Created by: Uri?
+ *
+ * History:
+ *   2015-07-29 Malte
+ *     Using the current version of Silicon (rev 6ecd860a311b), this example
+ *     verifies in about 5s
+ */
+
 /////////////////////////////////////////////////////////////////////
 //LinkedListNode
 
