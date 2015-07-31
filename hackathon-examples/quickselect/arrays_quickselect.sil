@@ -3,22 +3,26 @@ field val: Int
 domain IArray {
   function loc(a: IArray, i: Int): Ref
   function len(a: IArray): Int
+  function first(r: Ref): IArray
+  function second(r: Ref): Int
 
   axiom all_diff {
-    forall a1: IArray, a2: IArray, i: Int, j: Int :: {loc(a1, i), loc(a2, j)}
-      (a1 != a2 || i != j) ==> loc(a1, i) != loc(a2, j)
+    forall a: IArray, i: Int :: {loc(a, i)}
+      first(loc(a, i)) == a && second(loc(a, i)) == i
   }
 
-  axiom len_nonneg {
+  axiom length_nonneg {
     forall a: IArray :: len(a) >= 0
   }
 }
-
 /* https://en.wikipedia.org/wiki/Quickselect
  *
  * Changes w.r.t. the wikipedia code:
- *   - select returns the index of the n-th smallest element, not the element
+ *   - Select returns the index of the n-th smallest element, not the element
  *     itself
+ *   - In order to be able to specify that an array has been permuted by
+ *     certain operations, the permutation witness is made explicit
+ *     (Leino, Monahan - Dafny meets the Verification Benchmarks Challenge)
  */
 
 method swap(a: IArray, i: Int, j: Int)
@@ -36,47 +40,179 @@ method swap(a: IArray, i: Int, j: Int)
   loc(a, j).val := t
 }
 
-method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (storeIndex: Int)
-  requires 0 <= left && left < right
-  // requires 0 <= left && left <= len(a)
-  requires /* 0 <= right && */ right < len(a)
+define permuted(a, left, pw)
+  forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
+
+method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (storeIndex: Int, pw: Seq[Int])
+  /* All indices are valid and their relative order is satisfied */
+  requires 0 <= left && left < right && right < len(a)
   requires left <= pivotIndex && pivotIndex <= right
+  /* Permissions to the array segment with indices [left..right] */
   requires forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
 
+  /* Returned index is a valid index */
   ensures left <= storeIndex && storeIndex <= right
+  /* Return all taken permissions */
   ensures forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
+  /* The pivot element is now stored at a[storeIndex] */
   ensures loc(a, storeIndex).val == old(loc(a, pivotIndex).val)
+  /* All elements left (right) of the pivot are smaller than (at least as big as) the pivot */
   ensures forall i: Int :: left <= i && i < storeIndex  ==> loc(a, i).val < loc(a, storeIndex).val
   ensures forall i: Int :: storeIndex < i && i <= right ==> loc(a, storeIndex).val <= loc(a, i).val
   // ensures forall i: Int :: i in [left..right+1)
     // i < pivotIndex
       // ? loc(a, i).val < loc(a, pivotIndex).val
       // : loc(a, pivotIndex).val <= loc(a, i).val
-      
-  /* TODO: Ensure that the post-array is a permutation of the pre-array */
+  /* pw witnesses a permutation of the array segment */
+  ensures |pw| == right + 1 - left
+  ensures forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
+  ensures forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+  /* The array segment has been permuted */
+  // ensures forall i: Int :: 0 <= i && i < |pw| ==> old(loc(a, pw[i])) != null /* TODO: Should not be necessary */
+  ensures forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
 {
-//// assume pivotIndex != right
   var pivotValue: Int := loc(a, pivotIndex).val
-  swap(a, pivotIndex, right)  // Move pivot to end
+
+  pw := [left..right + 1)
+
+  assert forall i: Int :: 0 <= i && i < |pw| ==> pw[i] == left + i
+  assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
+  assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+  assert forall i: Int :: 0 <= i && i < |pw| ==> pw[i] == left + i
+  assert forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == loc(a, left + i).val
+
+  /* TODO: Arbitrary instance of the forall below. This proof succeeds, the forall fails.
+   *       See also D:\Temp\z3_unknown_issue for further information.
+   */
+  var i1: Int
+  assume 0 <= i1 && i1 < |pw|
+  assert loc(a, left + i1).val == loc(a, pw[i1]).val /* Holds */
+  assume forall i: Int ::     0 <= i && i < |pw|
+                          ==> loc(a, left + i).val == loc(a, pw[i]).val /* Fails (if asserted) */
+
+  swap(a, pivotIndex, right) /* Move pivot to end, i.e. it is now at a[right] */
+
+
+  /* TODO: Same problem with prooving a forall */
+  var i0: Int
+  assume 0 <= i0 && i0 < |pw| && i0 != pivotIndex - left && i0 != right - left
+  assert loc(a, left + i0).val == old(loc(a, left + i0).val) /* Holds */
+  assume forall i: Int ::     0 <= i && i < |pw| && i != pivotIndex - left && i != right - left
+                          ==> loc(a, left + i).val == old(loc(a, left + i).val) /* Fails (if asserted) */
+
+  assert loc(a, pivotIndex).val == old(loc(a, right).val)
+  assert loc(a, right).val == old(loc(a, pivotIndex).val)
+
+  /* Swap pw[pivotIndex - left] and pw[right - left], which corresponds to
+   * swapping a[pivotIndex] and a[right]
+   */
+  var pw1: Seq[Int] := pw[.. pivotIndex - left]
+  var pw2: Seq[Int] := Seq(pw[right - left])
+  var pw3: Seq[Int] := pw[pivotIndex + 1 - left .. right - left]
+  var pw4: Seq[Int] := right != pivotIndex ? Seq(pw[pivotIndex - left]) : Seq[Int]()
+  var pw5: Seq[Int] := pw[right + 1 - left ..]
+
+  pw := pw1 ++ pw2 ++ pw3 ++ pw4 ++ pw5
+
+  assert forall i: Int :: 0 <= i && i < |pw| && i != pivotIndex - left && i != right - left ==> pw[i] == left + i
+  assert forall i: Int :: 0 <= i && i < |pw| && i == pivotIndex - left ==> pw[i] == right
+  assert forall i: Int :: 0 <= i && i < |pw| && i == right - left ==> pw[i] == pivotIndex
+
+  /* TODO: Same problem with prooving a forall */
+  var i2: Int
+  assume 0 <= i2 && i2 < |pw|
+  assert loc(a, left + i2).val == old(loc(a, pw[i2]).val)
+  assume permuted(a, left, pw) /* Fails (if asserted) */
+  // assert permuted(a, left, pw) /* Still fails, despite the preceding assume */
 
   storeIndex := left
   var j: Int := left
 
   while (j < right)
+    /* All indices are valid and their relative order is satisfied */
     invariant left <= j && j <= right
     invariant left <= storeIndex && storeIndex <= j
+    /* Permissions to the array segment.
+     * NOTE: Permissions to a[left..right) would suffice, and it would preserve
+     * information about the location of the pivot element, i.e. it would make
+     * invariant INV-PIV unnecessary. The current invariant, however, makes it
+     * possible to re-use the permuted(...) assertion.
+     */
     invariant forall i: Int :: i in [left..right+1) ==> acc(loc(a, i).val)
+    invariant loc(a, right).val == pivotValue /* INV-PIV */
+    /* All elements left (right) of the pivot are smaller than (at least as big as) the pivot */
     invariant forall i: Int :: i in [left..storeIndex) ==> loc(a, i).val < pivotValue
     invariant forall i: Int :: i in [storeIndex..j) ==> pivotValue <= loc(a, i).val
-    invariant loc(a, right).val == pivotValue
+    /* pw witnesses a permutation of the already visited array segment */
+    invariant |pw| == right + 1 - left
+    invariant forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
+    invariant forall i: Int, k: Int :: 0 <= i && i < k && k < |pw| ==> pw[i] != pw[k]
+    /* The array segment has been permuted.
+     * NOTE: Due to the problem with asserting foralls (see above), permuted(...)
+     * is inhaled, but not exhaled. Instead, it is manually asserted at the
+     * necessary positions.
+     */
+    invariant [permuted(a, left, pw), true]
   {
+    /* TODO: Remove */
+    // assume permuted(a, left, pw)
+    // assume forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
+
+    /* TODO: Same problem with prooving a forall,
+     *       but now even the work-around doesn't work anymore :-(
+     */
+    // var i4: Int
+    // assume 0 <= i4 && i4 < |pw|
+    // assert loc(a, left + i4).val == old(loc(a, pw[i4]).val) /* Fails */
+
+
     if (loc(a, j).val < pivotValue) {
+
       swap(a, j, storeIndex)
+
+      /* Swap pw[storeIndex - left] and pw[j - left], which corresponds to
+       * swapping a[storeIndex] and a[j]
+       */
+      // pw1 := pw[.. storeIndex - left]
+      // pw2 := Seq(pw[j - left])
+      // pw3 := pw[storeIndex + 1 - left .. j - left]
+      // pw4 := j != storeIndex ? Seq(pw[storeIndex - left]) : Seq[Int]()
+      // pw5 := pw[j + 1 - left ..]
+      // var newpw: Seq[Int] := pw1 ++ pw2 ++ pw3 ++ pw4 ++ pw5
+
+      /* TODO: Don't update pm if storeIndex == j */
+      var newpw1: Seq[Int] := pw[storeIndex - left := pw[j - left]]
+      var newpw2: Seq[Int] := newpw1[j - left := pw[storeIndex - left]]
+      var newpw: Seq[Int] := newpw2
+
+      /* We can prove that newpw is pw modulo the swapped entries */
+      assert forall i: Int :: 0 <= i && i < |newpw| && i != storeIndex - left && i != j - left ==> newpw[i] == pw[i]
+      assert forall i: Int :: 0 <= i && i < |newpw| && i == storeIndex - left ==> newpw[i] == pw[j - left]
+      assert forall i: Int :: 0 <= i && i < |newpw| && i == j - left ==> newpw[i] == pw[storeIndex - left]
+
+      pw := newpw
+
       storeIndex := storeIndex + 1
     }
 
     j := j + 1
+
+    /* TODO: Same problem with prooving a forall,
+     *       but now even the work-around doesn't work anymore :-(
+     */
+    // var i3: Int
+    // assume 0 <= i3 && i3 < |pw|
+    // assert loc(a, left + i3).val == old(loc(a, pw[i3]).val) /* Fails */
+    // assume permuted(a, left, pw) /* Fails (if asserted) */
   }
+
+  /* TODO: Same problem with prooving a forall,
+   *       but now even the work-around doesn't work anymore :-(
+   */
+  // var i5: Int
+  // assume 0 <= i5 && i5 < |pw|
+  // assert loc(a, left + i5).val == old(loc(a, pw[i5]).val) /* Fails */
+  // assume permuted(a, left, pw) /* Fails (if asserted) */
 
   assert loc(a, right).val == pivotValue
 
@@ -87,59 +223,59 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   assert loc(a, storeIndex).val == old(loc(a, pivotIndex).val)
 }
 
-method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int)
-  requires 0 <= left && left <= right && right < len(a)
-  requires left <= n && n <= right
-  requires forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
+// method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int)
+//   requires 0 <= left && left <= right && right < len(a)
+//   requires left <= n && n <= right
+//   requires forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
 
-  ensures forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
-  
-  // ensures exists i: Int :: left <= i && i <= right && loc(a, i).val == elem
-  ensures left <= idx && idx <= right
-  ensures idx == n /* P1 */
-  
-  /* TODO: The next two postconditions require the recursive calls to select_rec
-   * to guarantee that the array has been permutated.
-   */
-  ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <  loc(a, idx).val /* P2 */
-  ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
-  /* NOTE: From P1 and P2 it follows that loc(a, idx).val is the n-th smallest element */
-  
-  /* TODO: Ensure that the post-array is a permutation of the pre-array */
-{
-  if (left == right) {
-assume false
-    /* If the list contains only one element, return it */
-    // elem := loc(a, left).val
-    idx := left
-  } else {
-    var pivotIndex: Int
-    inhale left <= pivotIndex && pivotIndex <= right /* Non-det. choose a pivot index */
+//   ensures forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
 
-    pivotIndex := partition(a, left, right, pivotIndex)
-// assert forall i: Int :: left <= i && i < pivotIndex ==> loc(a, i).val   <  loc(a, pivotIndex).val
-// assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
-    // assume  forall i: Int :: left <= i && i <= right ==> (
-              // exists j: Int :: left <= j && j <= right && old(loc(a, i).val) == loc(a, j).val
-            // )
+//   // ensures exists i: Int :: left <= i && i <= right && loc(a, i).val == elem
+//   ensures left <= idx && idx <= right
+//   ensures idx == n /* P1 */
 
-    /* The pivot is in its final sorted position */
+//   /* TODO: The next two postconditions require the recursive calls to select_rec
+//    * to guarantee that the array has been permuted.
+//    */
+//   ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <  loc(a, idx).val /* P2 */
+//   ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
+//   /* NOTE: From P1 and P2 it follows that loc(a, idx).val is the n-th smallest element */
 
-    if (n == pivotIndex) {
-assume false
-      // elem := loc(a, n).val
-      idx := n
-    } elsif (n < pivotIndex) {
-assume false
-      // elem := select_rec(a, left, pivotIndex - 1, n)
-      idx := select_rec(a, left, pivotIndex - 1, n)
-    } else {
+//   /* TODO: Ensure that the post-array is a permutation of the pre-array */
+// {
+//   if (left == right) {
 // assume false
-      // elem := select_rec(a, pivotIndex + 1, right, n)
-      idx := select_rec(a, pivotIndex + 1, right, n)
-    }
-  }
-}
+//     /* If the list contains only one element, return it */
+//     // elem := loc(a, left).val
+//     idx := left
+//   } else {
+//     var pivotIndex: Int
+//     inhale left <= pivotIndex && pivotIndex <= right /* Non-det. choose a pivot index */
+
+//     pivotIndex := partition(a, left, right, pivotIndex)
+// // assert forall i: Int :: left <= i && i < pivotIndex ==> loc(a, i).val   <  loc(a, pivotIndex).val
+// // assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
+//     // assume  forall i: Int :: left <= i && i <= right ==> (
+//               // exists j: Int :: left <= j && j <= right && old(loc(a, i).val) == loc(a, j).val
+//             // )
+
+//     /* The pivot is in its final sorted position */
+
+//     if (n == pivotIndex) {
+// assume false
+//       // elem := loc(a, n).val
+//       idx := n
+//     } elsif (n < pivotIndex) {
+// assume false
+//       // elem := select_rec(a, left, pivotIndex - 1, n)
+//       idx := select_rec(a, left, pivotIndex - 1, n)
+//     } else {
+// // assume false
+//       // elem := select_rec(a, pivotIndex + 1, right, n)
+//       idx := select_rec(a, pivotIndex + 1, right, n)
+//     }
+//   }
+// }
 
 // function elems(a: IArray, left: Int, right: Int): Seq[Int]
   // requires 0 <= left && left <= right && right < len(a)
