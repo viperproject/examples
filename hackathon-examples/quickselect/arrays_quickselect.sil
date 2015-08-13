@@ -21,7 +21,7 @@ domain IArray {
  *   - Select returns the index of the n-th smallest element, not the element
  *     itself
  *   - In order to be able to specify that an array has been permuted by
- *     certain operations, the permutation witness is made explicit
+ *     certain operations, the permutation witness (pw) is made explicit
  *     (Leino, Monahan - Dafny meets the Verification Benchmarks Challenge)
  */
 
@@ -40,6 +40,10 @@ method swap(a: IArray, i: Int, j: Int)
   loc(a, j).val := t
 }
 
+/* permuted(a, left, pw) says that the element that is now at a[i] was originally
+ * at a[pw[i]] (modulo some index shifting because pw only covers the segment
+ * a[left..right])
+ */
 define permuted(a, left, pw)
   forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
 
@@ -119,7 +123,7 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
     j := j + 1
   }
 
-  swap(a, right, storeIndex)  /* Move pivot to its final place */
+  swap(a, right, storeIndex)  /* Move pivot to its final position */
 }
 
 method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, pw: Seq[Int])
@@ -133,11 +137,8 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   ensures left <= idx && idx <= right
   ensures idx == n /* P1 */
 
-  /* TODO: The next two postconditions require the recursive calls to select_rec
-   * to guarantee that the array has been permuted.
-   */
-  ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <  loc(a, idx).val /* P2 */
-  ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
+  ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val /* P2 */
+  ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val /* P3 */
   /* NOTE: From P1 and P2 it follows that loc(a, idx).val is the n-th smallest element */
 
   /* pw witnesses a permutation of the array segment */
@@ -147,36 +148,118 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   /* The array segment has been permuted */
   ensures permuted(a, left, pw)
 {
+  var pwPar: Seq[Int]
+  var pwRec: Seq[Int]
+
   if (left == right) {
 assume false
     /* If the list contains only one element, return it */
-    // elem := loc(a, left).val
     idx := left
+
+    pw := Seq(left)
   } else {
     var pivotIndex: Int
     inhale left <= pivotIndex && pivotIndex <= right /* Non-det. choose a pivot index */
 
-    pivotIndex, pw := partition(a, left, right, pivotIndex)
-// assert forall i: Int :: left <= i && i < pivotIndex ==> loc(a, i).val   <  loc(a, pivotIndex).val
-// assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
-    // assume  forall i: Int :: left <= i && i <= right ==> (
-              // exists j: Int :: left <= j && j <= right && old(loc(a, i).val) == loc(a, j).val
-            // )
+    pivotIndex, pwPar := partition(a, left, right, pivotIndex)
 
-    /* The pivot is in its final sorted position */
+    // assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <  loc(a, pivotIndex).val
+    // assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
+    // assert forall i: Int :: 0 <= i && i < |pwPar| ==> loc(a, left + i).val == old(loc(a, pwPar[i]).val)
 
     if (n == pivotIndex) {
-// assume false
-      // elem := loc(a, n).val
+assume false
       idx := n
+      pw := pwPar
     } elseif (n < pivotIndex) {
 assume false
-      // elem := select_rec(a, left, pivotIndex - 1, n)
-      idx, pw := select_rec(a, left, pivotIndex - 1, n)
+      idx, pwRec := select_rec(a, left, pivotIndex - 1, n)
+
+      /* In order to prove P3, we need to know that
+       *   loc(a, idx).val <= loc(a, pivotIndex).val
+       * This follows from the fact that the array segment a[left..pivotIndex - 1]
+       * has been permuted, as witnessed by pw.
+       * Concluding this (currently) needs to be triggered explicitly by the
+       * following assertion.
+       */
+      assert left <= pwRec[idx-left] && pwRec[idx-left] <= pivotIndex - 1
+
+
+      // var pwRight: Seq[Int] := pwPar[pivotIndex-left..]
+      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwPar| ==> pwPar[i] != pwPar[j]
+      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwRight| ==> pwRight[i] != pwRight[j]
+        /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+        /* TODO: The forall assumed afterwards includes invalid triggers! */
+
+
+      /* Recall that pw should witness that the element that is now at a[i] previously
+       * was at a[pw[i]] (modulo index shifting).
+       *
+       * Up to this point
+       *   1. the call to partition permuted a[left..right],
+       *      witnessed by pwPar
+       *   2. the recursive call to select_rec permuted a[left..pivotIndex - 1],
+       *      witnessed by pwRec
+       *
+       * Hence, an element that is now at a[i] previously was at
+       *   - a[pwPar[pwRec[i]]]  if left <= i <= pivotIndex - 1
+       *   - a[pwPar[i]]         if pivotIndex <= i <= right
+       */
+
+      inhale |pw| == |pwPar|
+      // assert |pwFinal| == right + 1 - left
+
+      inhale forall i: Int :: 0 <= i && i < |pwRec| ==> pw[i] == pwPar[pwRec[i] - left]
+
+      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= (pivotIndex - 1)
+      // assert forall i: Int :: 0 <= i && i < |pwPar| ==> left <= pwPar[i] && pwPar[i] <= right
+
+      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pwFinal[i]
+      // assert forall i: Int :: 0 <= i && i < |pw| ==> pwFinal[i] <= right
+      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pwFinal[i] && pwFinal[i] <= right
+
+      inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
     } else {
-assume false
-      // elem := select_rec(a, pivotIndex + 1, right, n)
-      idx, pw := select_rec(a, pivotIndex + 1, right, n)
+// assume false
+
+      // From partition
+      assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <  loc(a, pivotIndex).val
+      assert forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
+
+      idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
+
+      // From select_rec
+      assert forall i: Int :: pivotIndex + 1 <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val
+      assert forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
+
+      // Still from partition ...
+      assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <=  loc(a, pivotIndex).val
+      // assert forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
+      // ... but only follows from taking the witness pmRec into account
+      var i0: Int
+      assume pivotIndex < i0 && i0 <= right
+      assert pivotIndex < pwRec[i0-(pivotIndex + 1)] && pwRec[i0-(pivotIndex + 1)] <= right
+      assert loc(a, pivotIndex).val <= loc(a, i0).val
+
+      assume forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
+
+
+
+      inhale |pw| == |pwPar|
+      // inhale forall i: Int :: left <= i && i <= pivotIndex ==> pw[i-left] == pwPar[i-left]
+      // inhale forall i: Int :: pivotIndex < i && i <= right ==> pw[i-left] == pwPar[pwRec[i-left]-left]
+
+      inhale forall i: Int :: 0 <= i && i <= pivotIndex-left ==> pw[i] == pwPar[i]
+      inhale forall i: Int :: pivotIndex-left < i && i < |pw| ==> pw[i] == pwPar[pwRec[i-pivotIndex]-left]
+
+      assert |pw| == right + 1 - left
+      assert forall i: Int :: 0 <= i && i <= pivotIndex-left ==> left <= pw[i] && pw[i] <= right
+      assume forall i: Int :: pivotIndex-left < i && i < |pw| ==> left <= pw[i] && pw[i] <= right
+
+      assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
+
+      assume/*assert*/ forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
     }
   }
 }
