@@ -16,10 +16,13 @@ domain IArray {
   }
 }
 
+/**
+This example fails dute to triggre generation in Z3.
+**/
 
 method binary_search(a: IArray, key: Int) returns (index: Int) 
   requires forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
-  requires forall i: Int, j: Int :: 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
+  requires forall i: Int, j: Int :: {loc(a, i), loc(a, j)} 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
   ensures -1 <= index && index < length(a)
   ensures forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
   ensures 0 <= index ==> loc(a, index).val == key
@@ -32,21 +35,22 @@ method binary_search(a: IArray, key: Int) returns (index: Int)
     invariant forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
     invariant forall i: Int, j: Int :: 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
     invariant 0 <= low && low <= high && high <= length(a)
-    invariant forall i: Int :: {loc(a, i)}(0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key
+    // The next line does not work due triggers in Z3
+    invariant index == -1 ==> forall i: Int :: {loc(a, i)}(0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key
+    invariant -1 <= index && index < length(a)
+    invariant 0 <= index ==> loc(a, index).val == key
   {
     var mid: Int := (low + high) \ 2
-    assert (mid <= high && low <= mid)
     if (loc(a, mid).val < key) { 
       var oldLow: Int := low
       low := mid + 1
-      assert forall i: Int :: {loc(a, i)}((0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key)
     } else {
       if (key < loc(a, mid).val) {
         high := mid
       } else {
         index := mid
+        high := mid
       }
     }
   }
-  index := -1
 }
