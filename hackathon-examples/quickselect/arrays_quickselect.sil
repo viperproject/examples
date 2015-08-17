@@ -152,7 +152,7 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   var pwRec: Seq[Int]
 
   if (left == right) {
-assume false
+// assume false
     /* If the list contains only one element, return it */
     idx := left
 
@@ -163,16 +163,12 @@ assume false
 
     pivotIndex, pwPar := partition(a, left, right, pivotIndex)
 
-    // assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <  loc(a, pivotIndex).val
-    // assert forall i: Int :: pivotIndex < i && i <= right ==> loc(a, pivotIndex).val <= loc(a, i).val
-    // assert forall i: Int :: 0 <= i && i < |pwPar| ==> loc(a, left + i).val == old(loc(a, pwPar[i]).val)
-
     if (n == pivotIndex) {
-assume false
+// assume false
       idx := n
       pw := pwPar
     } elseif (n < pivotIndex) {
-assume false
+// assume false
       idx, pwRec := select_rec(a, left, pivotIndex - 1, n)
 
       /* In order to prove P3, we need to know that
@@ -182,7 +178,7 @@ assume false
        * Concluding this (currently) needs to be triggered explicitly by the
        * following assertion.
        */
-      assert left <= pwRec[idx-left] && pwRec[idx-left] <= pivotIndex - 1
+      assert dummy(pwRec[idx-left])
 
 
       // var pwRight: Seq[Int] := pwPar[pivotIndex-left..]
@@ -208,58 +204,20 @@ assume false
        */
 
       inhale |pw| == |pwPar|
-      // assert |pwFinal| == right + 1 - left
-
       inhale forall i: Int :: 0 <= i && i < |pwRec| ==> pw[i] == pwPar[pwRec[i] - left]
-
-      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= (pivotIndex - 1)
-      // assert forall i: Int :: 0 <= i && i < |pwPar| ==> left <= pwPar[i] && pwPar[i] <= right
-
-      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pwFinal[i]
-      // assert forall i: Int :: 0 <= i && i < |pw| ==> pwFinal[i] <= right
-      // assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pwFinal[i] && pwFinal[i] <= right
-
       inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
     } else {
 // assume false
-
-      // From partition
-      assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <  loc(a, pivotIndex).val
-      assert forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
-
       idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
 
-      // From select_rec
-      assert forall i: Int :: pivotIndex + 1 <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val
-      assert forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val
-
-      // Still from partition ...
-      assert forall i: Int :: left <= i && i < pivotIndex  ==> loc(a, i).val   <=  loc(a, pivotIndex).val
-      // assert forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
-      // ... but only follows from taking the witness pmRec into account
-      var i0: Int
-      assume pivotIndex < i0 && i0 <= right
-      assert pivotIndex < pwRec[i0-(pivotIndex + 1)] && pwRec[i0-(pivotIndex + 1)] <= right
-      assert loc(a, pivotIndex).val <= loc(a, i0).val
-
-      assume forall i: Int :: pivotIndex < i && i <= right  ==> loc(a, pivotIndex).val <= loc(a, i).val
-
-
+      /* Trigger considering pwRec when proving P3 (as above) */
+      assert dummy(pwRec[idx - (pivotIndex + 1)])
 
       inhale |pw| == |pwPar|
-      // inhale forall i: Int :: left <= i && i <= pivotIndex ==> pw[i-left] == pwPar[i-left]
-      // inhale forall i: Int :: pivotIndex < i && i <= right ==> pw[i-left] == pwPar[pwRec[i-left]-left]
-
-      inhale forall i: Int :: 0 <= i && i <= pivotIndex-left ==> pw[i] == pwPar[i]
-      inhale forall i: Int :: pivotIndex-left < i && i < |pw| ==> pw[i] == pwPar[pwRec[i-pivotIndex]-left]
-
-      assert |pw| == right + 1 - left
-      assert forall i: Int :: 0 <= i && i <= pivotIndex-left ==> left <= pw[i] && pw[i] <= right
-      assume forall i: Int :: pivotIndex-left < i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-
-      assert forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-
-      assume/*assert*/ forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+      inhale forall i: Int :: 0 <= i && i <= pivotIndex - left ==> pw[i] == pwPar[i]
+      inhale forall i: Int :: pivotIndex + 1 - left <= i && i < |pw| ==> pw[i] == pwPar[pwRec[i - (pivotIndex + 1 - left)] - left]
     }
   }
 }
+
+function dummy(i: Int): Bool { true }
