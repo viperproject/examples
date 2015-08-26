@@ -24,18 +24,16 @@ method swap(a: IArray, i: Int, j: Int)
 }
 
 /* permuted(a, left, pw) says that the element that is now at a[i] was originally
- * at a[pw[i]] (modulo some index shifting because pw only covers the segment
- * a[left..right]).
+ * at a[pw[i]].
  *
- * Technical detail: This axiom could yield a matching loop if a substitution
- * such as j := left + i, ~~> i == j - left, would be made. In this case,
- * loc(a, j) could be chosen as a trigger, and an instantiation with loc(a, N)
- * would yield the term loc(a, pw[N - left]) (ignoring old), which can be used
- * to trigger the axiom again, causing a matching loop.
+ * Technical detail: The explicit trigger {pw[i]} is necessary, the axiom might
+ * otherwise yield a matching loop if the trigger {loc(a, i)} is picked (by
+ * Silver or Z3). In that case, instantiating the axiom with loc(a, N) will
+ * yield the term loc(a, pw[N])(ignoring old), which can be used to trigger the
+ * axiom again, causing a matching loop.
  */
-define permuted(a, left, pw)
-  forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
-    /* {pw[i]} would be a well-behaving trigger */
+define permuted(a, left, right, pw)
+  forall i: Int :: {pw[i]} left <= i && i <= right ==> loc(a, i).val == old(loc(a, pw[i]).val)
 
 method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (storeIndex: Int, pw: Seq[Int])
   /* All indices are valid and their relative order is satisfied */
@@ -54,23 +52,28 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   ensures forall i: Int :: left <= i && i < storeIndex  ==> loc(a, i).val < loc(a, storeIndex).val
   ensures forall i: Int :: storeIndex < i && i <= right ==> loc(a, storeIndex).val <= loc(a, i).val
   /* pw witnesses a permutation of the array segment */
-  ensures |pw| == right + 1 - left
-  ensures forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-  ensures forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+  ensures |pw| == right + 1
+  ensures forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
+  ensures forall i: Int, j: Int :: left <= i && i < j && j <= right ==> pw[i] != pw[j]
   /* The array segment has been permuted */
-  ensures permuted(a, left, pw)
+  ensures permuted(a, left, right, pw)
 {
   var pivotValue: Int := loc(a, pivotIndex).val
 
-  pw := [left..right + 1)
+  /* Initialize pw */
+  pw := [0..right + 1)
+  /* Alternative:
+   *   inhale |pw| == right + 1
+   *   inhale forall i: Int :: left <= i && i <= right ==> pw[i] == i
+   */
 
   swap(a, pivotIndex, right) /* Move pivot to end, i.e. it is now at a[right] */
 
-  /* Swap pw[pivotIndex - left] and pw[right - left], which corresponds to
+  /* Swap pw[pivotIndex] and pw[right], which corresponds to
    * swapping a[pivotIndex] and a[right]
    */
-  pw := pw[pivotIndex - left := pw[right - left]]
-          [right - left := pw[pivotIndex - left]]
+  pw := pw[pivotIndex := pw[right]]
+          [right := pw[pivotIndex]]
 
   storeIndex := left
   var j: Int := left
@@ -85,27 +88,26 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
      * invariant INV-PIV unnecessary. The current invariant, however, makes it
      * possible to re-use the permuted(...) assertion.
      */
-    invariant forall i: Int :: i in [left..right+1) ==> acc(loc(a, i).val)
+    invariant forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
     invariant loc(a, right).val == pivotValue /* INV-PIV */
     /* All elements left (right) of the pivot are smaller than (at least as big as) the pivot */
-    invariant forall i: Int :: i in [left..storeIndex) ==> loc(a, i).val < pivotValue
-    invariant forall i: Int :: i in [storeIndex..j) ==> pivotValue <= loc(a, i).val
+    invariant forall i: Int :: left <= i && i < storeIndex ==> loc(a, i).val < pivotValue
+    invariant forall i: Int :: storeIndex <= i && i < j ==> pivotValue <= loc(a, i).val
     /* pw witnesses a permutation of the already visited array segment */
-    invariant |pw| == right + 1 - left
-    invariant forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-    invariant forall i: Int, k: Int :: 0 <= i && i < k && k < |pw| ==> pw[i] != pw[k]
+    invariant |pw| == right + 1
+    invariant forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
+    invariant forall i: Int, k: Int :: left <= i && i < k && k <= right ==> pw[i] != pw[k]
     /* The array segment has been permuted */
-    invariant permuted(a, left, pw)
+    invariant permuted(a, left, right, pw)
   {
     if (loc(a, j).val < pivotValue) {
-
       swap(a, j, storeIndex)
 
-      /* Swap pw[storeIndex - left] and pw[j - left], which corresponds to
+      /* Swap pw[storeIndex] and pw[j], which corresponds to
        * swapping a[storeIndex] and a[j]
        */
-      pw := pw[storeIndex - left := pw[j - left]]
-              [j - left := pw[storeIndex - left]]
+      pw := pw[storeIndex := pw[j]]
+              [j := pw[storeIndex]]
 
       storeIndex := storeIndex + 1
     }
@@ -132,11 +134,11 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val /* P2 */
   ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val /* P3 */
   /* pw witnesses a permutation of the array segment */
-  ensures |pw| == right + 1 - left
-  ensures forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-  ensures forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+  ensures |pw| == right + 1
+  ensures forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
+  ensures forall i: Int, j: Int :: left <= i && i < j && j <= right ==> pw[i] != pw[j]
   /* The array segment has been permuted */
-  ensures permuted(a, left, pw)
+  ensures permuted(a, left, right, pw)
 {
   var pwPar: Seq[Int]
   var pwRec: Seq[Int]
@@ -145,7 +147,7 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
     /* If the list contains only one element, return it */
     idx := left
 
-    pw := Seq(left)
+    pw := [0..left + 1)
   } else {
     var pivotIndex: Int
     inhale left <= pivotIndex && pivotIndex <= right /* Non-det. choose a pivot index */
@@ -165,10 +167,10 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        * Concluding this (currently) needs to be triggered explicitly by the
        * following assertion.
        */
-      assert dummy(pwRec[idx-left])
+      assert dummy(pwRec[idx])
 
       /* Recall that pw should witness that the element that is now at a[i] previously
-       * was at a[pw[i]] (modulo index shifting).
+       * was at a[pw[i]]
        *
        * Up to this point
        *   1. the call to partition permuted a[left..right],
@@ -181,18 +183,18 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        *   - a[pwPar[i]]         if pivotIndex <= i <= right
        */
 
-      inhale |pw| == |pwPar|
-      inhale forall i: Int :: 0 <= i && i < |pwRec| ==> pw[i] == pwPar[pwRec[i] - left]
-      inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
+      inhale |pw| == right + 1
+      inhale forall i: Int :: left <= i && i <= pivotIndex - 1 ==> pw[i] == pwPar[pwRec[i]]
+      inhale forall i: Int :: pivotIndex <= i && i <= right ==> pw[i] == pwPar[i]
     } else {
       /* Analogous to the previous case, but affecting a[pivotIndex + 1..right] */
       idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
 
-      assert dummy(pwRec[idx - (pivotIndex + 1)])
+      assert dummy(pwRec[idx])
 
-      inhale |pw| == |pwPar|
-      inhale forall i: Int :: 0 <= i && i <= pivotIndex - left ==> pw[i] == pwPar[i]
-      inhale forall i: Int :: pivotIndex + 1 - left <= i && i < |pw| ==> pw[i] == pwPar[pwRec[i - (pivotIndex + 1 - left)] - left]
+      inhale |pw| == right + 1
+      inhale forall i: Int :: left <= i && i <= pivotIndex ==> pw[i] == pwPar[i]
+      inhale forall i: Int :: pivotIndex + 1 <= i && i <= right ==> pw[i] == pwPar[pwRec[i]]
     }
   }
 }
