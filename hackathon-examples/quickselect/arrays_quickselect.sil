@@ -25,10 +25,17 @@ method swap(a: IArray, i: Int, j: Int)
 
 /* permuted(a, left, pw) says that the element that is now at a[i] was originally
  * at a[pw[i]] (modulo some index shifting because pw only covers the segment
- * a[left..right])
+ * a[left..right]).
+ *
+ * Technical detail: This axiom could yield a matching loop if a substitution
+ * such as j := left + i, ~~> i == j - left, would be made. In this case,
+ * loc(a, j) could be chosen as a trigger, and an instantiation with loc(a, N)
+ * would yield the term loc(a, pw[N - left]) (ignoring old), which can be used
+ * to trigger the axiom again, causing a matching loop.
  */
 define permuted(a, left, pw)
   forall i: Int :: 0 <= i && i < |pw| ==> loc(a, left + i).val == old(loc(a, pw[i]).val)
+    /* {pw[i]} would be a well-behaving trigger */
 
 method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (storeIndex: Int, pw: Seq[Int])
   /* All indices are valid and their relative order is satisfied */
