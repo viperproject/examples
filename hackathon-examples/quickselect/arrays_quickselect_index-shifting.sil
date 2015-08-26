@@ -1,11 +1,13 @@
-/* https://en.wikipedia.org/wiki/Quickselect
+/* This version differs from arrays_quickselect.sil in so far as the permutation
+ * witness pw only covers the segment of the array that is being mutated by
+ * partition and by select_rec, respectively.
  *
- * Changes w.r.t. the wikipedia code:
- *   - Select returns the index of the n-th smallest element, not the element
- *     itself
- *   - In order to be able to specify that an array has been permuted by
- *     certain operations, the permutation witness (pw) is made explicit
- *     (Leino, Monahan - Dafny meets the Verification Benchmarks Challenge)
+ * For example, if pw is returned from a call partition(a, left, right), which
+ * (potentially) permutes a[left..right]), then |pw| == right + 1 - left, and
+ * consequently, the element that was at a[i] is now at a[pw[i - left]].
+ *
+ * The necessary index shifting makes several expressions more complicated, in
+ * particular in select_rec.
  */
 
 method swap(a: IArray, i: Int, j: Int)
