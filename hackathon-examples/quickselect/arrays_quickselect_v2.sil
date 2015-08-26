@@ -61,11 +61,15 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   var pivotValue: Int := loc(a, pivotIndex).val
 
   /* Initialize pw */
-  inhale forall i: Int :: left <= i && i <= right ==> pw[i] == i
+  pw := [0..right + 1)
+  /* Alternative:
+   *   inhale |pw| == right + 1
+   *   inhale forall i: Int :: left <= i && i <= right ==> pw[i] == i
+   */
 
   swap(a, pivotIndex, right) /* Move pivot to end, i.e. it is now at a[right] */
 
-  /* Swap pw[pivotIndex - left] and pw[right - left], which corresponds to
+  /* Swap pw[pivotIndex] and pw[right], which corresponds to
    * swapping a[pivotIndex] and a[right]
    */
   pw := pw[pivotIndex := pw[right]]
@@ -99,7 +103,7 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
     if (loc(a, j).val < pivotValue) {
       swap(a, j, storeIndex)
 
-      /* Swap pw[storeIndex - left] and pw[j - left], which corresponds to
+      /* Swap pw[storeIndex] and pw[j], which corresponds to
        * swapping a[storeIndex] and a[j]
        */
       pw := pw[storeIndex := pw[j]]
@@ -140,11 +144,10 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   var pwRec: Seq[Int]
 
   if (left == right) {
-// assume false
     /* If the list contains only one element, return it */
     idx := left
 
-    pw := Seq(left)
+    pw := [0..left + 1)
   } else {
     var pivotIndex: Int
     inhale left <= pivotIndex && pivotIndex <= right /* Non-det. choose a pivot index */
@@ -152,11 +155,9 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
     pivotIndex, pwPar := partition(a, left, right, pivotIndex)
 
     if (n == pivotIndex) {
-// assume false
       idx := n
       pw := pwPar
     } elseif (n < pivotIndex) {
-// assume false
       idx, pwRec := select_rec(a, left, pivotIndex - 1, n)
 
       /* In order to prove P3, we need to know that
@@ -168,17 +169,8 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        */
       assert dummy(pwRec[idx])
 
-
-      // var pwRight: Seq[Int] := pwPar[pivotIndex-left..]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwPar| ==> pwPar[i] != pwPar[j]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwRight| ==> pwRight[i] != pwRight[j]
-        /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-        /* TODO: The forall assumed afterwards includes invalid triggers! */
-
-
       /* Recall that pw should witness that the element that is now at a[i] previously
-       * was at a[pw[i]] (modulo index shifting).
+       * was at a[pw[i]]
        *
        * Up to this point
        *   1. the call to partition permuted a[left..right],
@@ -191,19 +183,18 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        *   - a[pwPar[i]]         if pivotIndex <= i <= right
        */
 
-      inhale |pw| == |pwPar|
-      inhale forall i: Int :: 0 <= i && i < |pwRec| ==> pw[i] == pwPar[pwRec[i] - left]
-      inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
+      inhale |pw| == right + 1
+      inhale forall i: Int :: left <= i && i <= pivotIndex - 1 ==> pw[i] == pwPar[pwRec[i]]
+      inhale forall i: Int :: pivotIndex <= i && i <= right ==> pw[i] == pwPar[i]
     } else {
-// assume false
+      /* Analogous to the previous case, but affecting a[pivotIndex + 1..right] */
       idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
 
-      /* Mention pwRec, required to prove P3 (as above) */
-      assert dummy(pwRec[idx - (pivotIndex + 1)])
+      assert dummy(pwRec[idx])
 
-      inhale |pw| == |pwPar|
-      inhale forall i: Int :: 0 <= i && i <= pivotIndex - left ==> pw[i] == pwPar[i]
-      inhale forall i: Int :: pivotIndex + 1 - left <= i && i < |pw| ==> pw[i] == pwPar[pwRec[i - (pivotIndex + 1 - left)] - left]
+      inhale |pw| == right + 1
+      inhale forall i: Int :: left <= i && i <= pivotIndex ==> pw[i] == pwPar[i]
+      inhale forall i: Int :: pivotIndex + 1 <= i && i <= right ==> pw[i] == pwPar[pwRec[i]]
     }
   }
 }
