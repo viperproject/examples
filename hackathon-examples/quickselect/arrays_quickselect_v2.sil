@@ -24,11 +24,16 @@ method swap(a: IArray, i: Int, j: Int)
 }
 
 /* permuted(a, left, pw) says that the element that is now at a[i] was originally
- * at a[pw[i]] (modulo some index shifting because pw only covers the segment
- * a[left..right])
+ * at a[pw[i]].
+ *
+ * Technical detail: The explicit trigger {pw[i]} is necessary, the axiom might
+ * otherwise yield a matching loop if the trigger {loc(a, i)} is picked (by
+ * Silver or Z3). In that case, instantiating the axiom with loc(a, N) will
+ * yield the term loc(a, pw[N])(ignoring old), which can be used to trigger the
+ * axiom again, causing a matching loop.
  */
 define permuted(a, left, right, pw)
-  forall i: Int :: left <= i && i <= right ==> loc(a, i).val == old(loc(a, pw[i]).val)
+  forall i: Int :: {pw[i]} left <= i && i <= right ==> loc(a, i).val == old(loc(a, pw[i]).val)
 
 method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (storeIndex: Int, pw: Seq[Int])
   /* All indices are valid and their relative order is satisfied */
@@ -79,11 +84,11 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
      * invariant INV-PIV unnecessary. The current invariant, however, makes it
      * possible to re-use the permuted(...) assertion.
      */
-    invariant forall i: Int :: i in [left..right+1) ==> acc(loc(a, i).val)
+    invariant forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
     invariant loc(a, right).val == pivotValue /* INV-PIV */
     /* All elements left (right) of the pivot are smaller than (at least as big as) the pivot */
-    invariant forall i: Int :: i in [left..storeIndex) ==> loc(a, i).val < pivotValue
-    invariant forall i: Int :: i in [storeIndex..j) ==> pivotValue <= loc(a, i).val
+    invariant forall i: Int :: left <= i && i < storeIndex ==> loc(a, i).val < pivotValue
+    invariant forall i: Int :: storeIndex <= i && i < j ==> pivotValue <= loc(a, i).val
     /* pw witnesses a permutation of the already visited array segment */
     invariant |pw| == right + 1
     invariant forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
@@ -125,9 +130,9 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val /* P2 */
   ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val /* P3 */
   /* pw witnesses a permutation of the array segment */
-  ensures |pw| == right + 1 - left
-  ensures forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
-  ensures forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
+  ensures |pw| == right + 1
+  ensures forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
+  ensures forall i: Int, j: Int :: left <= i && i < j && j <= right ==> pw[i] != pw[j]
   /* The array segment has been permuted */
   ensures permuted(a, left, right, pw)
 {
@@ -161,7 +166,7 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        * Concluding this (currently) needs to be triggered explicitly by the
        * following assertion.
        */
-      assert dummy(pwRec[idx-left])
+      assert dummy(pwRec[idx])
 
 
       // var pwRight: Seq[Int] := pwPar[pivotIndex-left..]
