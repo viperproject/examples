@@ -142,7 +142,6 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   var pwRec: Seq[Int]
 
   if (left == right) {
-// assume false
     /* If the list contains only one element, return it */
     idx := left
 
@@ -154,11 +153,9 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
     pivotIndex, pwPar := partition(a, left, right, pivotIndex)
 
     if (n == pivotIndex) {
-// assume false
       idx := n
       pw := pwPar
     } elseif (n < pivotIndex) {
-// assume false
       idx, pwRec := select_rec(a, left, pivotIndex - 1, n)
 
       /* In order to prove P3, we need to know that
@@ -169,15 +166,6 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
        * following assertion.
        */
       assert dummy(pwRec[idx-left])
-
-
-      // var pwRight: Seq[Int] := pwPar[pivotIndex-left..]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwPar| ==> pwPar[i] != pwPar[j]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pw| ==> pw[i] != pw[j]
-      // assert forall i: Int, j: Int :: 0 <= i && i < j && j < |pwRight| ==> pwRight[i] != pwRight[j]
-        /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-        /* TODO: The forall assumed afterwards includes invalid triggers! */
-
 
       /* Recall that pw should witness that the element that is now at a[i] previously
        * was at a[pw[i]] (modulo index shifting).
@@ -197,10 +185,9 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
       inhale forall i: Int :: 0 <= i && i < |pwRec| ==> pw[i] == pwPar[pwRec[i] - left]
       inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
     } else {
-// assume false
+      /* Analogous to the previous case, but affecting a[pivotIndex + 1..right] */
       idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
 
-      /* Mention pwRec, required to prove P3 (as above) */
       assert dummy(pwRec[idx - (pivotIndex + 1)])
 
       inhale |pw| == |pwPar|
