@@ -118,7 +118,7 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   swap(a, right, storeIndex)  /* Move pivot to its final position */
 }
 
-method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, pw: Seq[Int])
+method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (storeIndex: Int, pw: Seq[Int])
   /* All indices are valid and their relative order is satisfied */
   requires 0 <= left && left <= right && right < len(a)
   requires left <= n && n <= right
@@ -126,13 +126,13 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
   requires forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
 
   /* Returned index is a valid index */
-  ensures left <= idx && idx <= right
+  ensures left <= storeIndex && storeIndex <= right
   /* Return all taken permissions */
   ensures forall i: Int :: left <= i && i <= right ==> acc(loc(a, i).val)
-  /* From P1 and P2 it follows that loc(a, idx).val is the n-th smallest element */
-  ensures idx == n /* P1 */
-  ensures forall i: Int :: left <= i && i < idx  ==> loc(a, i).val   <=  loc(a, idx).val /* P2 */
-  ensures forall i: Int :: idx < i && i <= right ==> loc(a, idx).val <= loc(a, i).val /* P3 */
+  /* From P1 and P2 it follows that loc(a, storeIndex).val is the n-th smallest element */
+  ensures storeIndex == n /* P1 */
+  ensures forall i: Int :: left <= i && i < storeIndex  ==> loc(a, i).val <= loc(a, storeIndex).val /* P2 */
+  ensures forall i: Int :: storeIndex < i && i <= right ==> loc(a, storeIndex).val <= loc(a, i).val /* P3 */
   /* pw witnesses a permutation of the array segment */
   ensures |pw| == right + 1 - left
   ensures forall i: Int :: 0 <= i && i < |pw| ==> left <= pw[i] && pw[i] <= right
@@ -145,7 +145,7 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
 
   if (left == right) {
     /* If the list contains only one element, return it */
-    idx := left
+    storeIndex := left
 
     pw := Seq(left)
   } else {
@@ -155,19 +155,19 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
     pivotIndex, pwPar := partition(a, left, right, pivotIndex)
 
     if (n == pivotIndex) {
-      idx := n
+      storeIndex := pivotIndex
       pw := pwPar
     } elseif (n < pivotIndex) {
-      idx, pwRec := select_rec(a, left, pivotIndex - 1, n)
+      storeIndex, pwRec := select_rec(a, left, pivotIndex - 1, n)
 
       /* In order to prove P3, we need to know that
-       *   loc(a, idx).val <= loc(a, pivotIndex).val
+       *   loc(a, storeIndex).val <= loc(a, pivotIndex).val
        * This follows from the fact that the array segment a[left..pivotIndex - 1]
        * has been permuted, as witnessed by pw.
        * Concluding this (currently) needs to be triggered explicitly by the
        * following assertion.
        */
-      assert dummy(pwRec[idx-left])
+      assert dummy(pwRec[storeIndex-left])
 
       /* Recall that pw should witness that the element that is now at a[i] previously
        * was at a[pw[i]] (modulo index shifting).
@@ -188,9 +188,9 @@ method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (idx: Int, p
       inhale forall i: Int :: |pwRec| <= i && i < |pwPar| ==> pw[i] == pwPar[i]
     } else {
       /* Analogous to the previous case, but affecting a[pivotIndex + 1..right] */
-      idx, pwRec := select_rec(a, pivotIndex + 1, right, n)
+      storeIndex, pwRec := select_rec(a, pivotIndex + 1, right, n)
 
-      assert dummy(pwRec[idx - (pivotIndex + 1)])
+      assert dummy(pwRec[storeIndex - (pivotIndex + 1)])
 
       inhale |pw| == |pwPar|
       inhale forall i: Int :: 0 <= i && i <= pivotIndex - left ==> pw[i] == pwPar[i]
@@ -205,20 +205,20 @@ method client(a: IArray)
   requires forall i: Int :: 0 <= i && i <= 10 ==> loc(a, i).val == i
   ensures forall i: Int :: 0 <= i && i < len(a) ==> acc(loc(a, i).val)
 {
-  var idx: Int
+  var storeIndex: Int
   var pw: Seq[Int]
 
-  idx, pw := select_rec(a, 0, 10, 3)
+  storeIndex, pw := select_rec(a, 0, 10, 3)
 
-  assert idx == 3
-  assert loc(a, idx).val == old(loc(a, pw[idx]).val)
+  assert storeIndex == 3
+  assert loc(a, storeIndex).val == old(loc(a, pw[storeIndex]).val)
 
   assert old(loc(a, 0).val) == 0
   assert old(loc(a, 3).val) == 3
   assert old(loc(a, 2).val) != old(loc(a, 3).val)
 
   /* Cannot been proven (directly, yet) */
-  //assert loc(a, idx).val == 3
+  //assert loc(a, storeIndex).val == 3
   //assert loc(a, 2).val != loc(a, 3).val
 }
 
