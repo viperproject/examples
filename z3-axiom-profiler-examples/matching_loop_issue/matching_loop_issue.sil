@@ -1,0 +1,35 @@
+domain ISeq {
+  function sgltn(x: Int): ISeq
+  function len(es: ISeq): Int
+  function idx(es: ISeq, i: Int): Int
+  function drop(es: ISeq, i: Int): ISeq
+  function append(es1: ISeq, es2: ISeq): ISeq
+}
+
+domain Process { 
+  function p_empty(): Process
+  function p_seq(p1: Process, p2: Process): Process
+  function p_put(e: Int): Process
+  function p_put_all(es: ISeq): Process
+
+  //axiom seq_assoc_nested {
+  //  forall p1: Process ::
+  //    forall p2: Process ::
+  //      forall p3: Process ::
+  //        p_seq(p_seq(p1, p2), p3) == p_seq(p1, p_seq(p2, p3))
+  //}
+  
+  axiom seq_assoc {
+    forall p1: Process, p2: Process, p3: Process ::
+      p_seq(p_seq(p1, p2), p3) == p_seq(p1, p_seq(p2, p3))
+  }
+  
+  axiom put_all_def_suspect {
+    forall es: ISeq ::
+      (len(es) == 0 ? p_empty() : p_seq(p_put(idx(es, 0)), p_put_all(drop(es, 1)))) == p_put_all(es)
+  }
+}
+
+method test(es: ISeq, e: Int)
+  ensures p_seq(p_put_all(es), p_put(e)) == p_put_all(append(es, sgltn(e)))
+{}
