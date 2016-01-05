@@ -116,6 +116,10 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   }
 
   swap(a, right, storeIndex)  /* Move pivot to its final position */
+
+  /* Update permutation witness accordingly */
+  pw := pw[storeIndex := pw[right]]
+          [right := pw[storeIndex]]
 }
 
 method select_rec(a: IArray, left: Int, right: Int, n: Int) returns (storeIndex: Int, pw: Seq[Int])
