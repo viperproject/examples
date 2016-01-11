@@ -1,0 +1,141 @@
+// array fields
+
+field val: Ref // array slot value
+
+domain IEntryArray {
+  function loc(a: IEntryArray, i: Int): Ref
+  function length(a: IEntryArray): Int
+  function inverse_first(r: Ref): IEntryArray // array this slot belongs to
+  function inverse_second(r: Ref): Int // index of this array slot
+
+  axiom all_diff {
+    forall a: IEntryArray, i: Int :: {loc(a, i)}
+      inverse_first(loc(a, i)) == a && inverse_second(loc(a, i)) == i
+  }
+
+  axiom length_nonneg {
+    forall a: IEntryArray :: length(a) >= 0
+  }
+}
+// a[i] --> loc(a,i).val
+
+
+// IntHeap class
+
+field size : Int
+field heap : IEntryArray
+field currentIndex : Int
+
+
+define left(i) i*2 + 1
+define right(i) i*2 + 2
+
+function parent(i : Int) : Int
+  ensures (i > 0 ==> result < i) // not sure this is needed
+{
+	(i > 0 ? (i-1)\2 : 0)
+}
+
+predicate IntHeap(this: Ref) {
+	acc(this.size) && acc(this.heap) && acc(this.currentIndex) &&
+  this.size == length(this.heap) && 0 <= this.currentIndex && this.currentIndex <= length(this.heap) &&
+	(forall i: Int ::  (0<= i && i < length(this.heap)) ==> acc(loc(this.heap,i).val)) &&
+	(forall i: Int :: (0<= i && i < this.currentIndex) ==> acc(loc(this.heap,i).val.ordinal)) &&
+	(forall i: Int, j: Int :: {loc(this.heap,i),loc(this.heap,j)} (0 <= i && i < j && j < this.currentIndex) ==> loc(this.heap,i).val != loc(this.heap,j).val) &&
+	(forall i: Int :: {loc(this.heap,i),parent(i)} (0< i && i < this.currentIndex) ==> let p == (parent(i)) in comparisonBetter(loc(this.heap,i).val.ordinal,loc(this.heap,p).val.ordinal)) // nested macros don't work
+}
+
+//function elems(this: Ref) : Set[Ref]
+//  requires acc(IntHeap(this))
+//  ensures unfolding IntHeap(this) in forall i: Int :: (0<= i && i < this.currentIndex) ==> loc(this.heap,i).val in result
+//  ensures unfolding IntHeap(this) in  forall r:Ref :: r in result ==> exists j : Int :: (0<=j && j < this.currentIndex)
+
+// no addCount, updateCount, swapCount (statistics)
+define comparisonBetter(a,b) (a < b)
+define intValueToOrdinal(a) a
+
+method IHeapConstructor(s: Int) returns (this:Ref)
+  ensures acc(IntHeap(this))
+{
+	this := new(size,heap,currentIndex)
+	this.currentIndex := 0 // defaultValue
+  this.size := s
+  // allocate array
+  var freshArray : IEntryArray // unknown value
+  assume length(freshArray) == this.size
+  inhale (forall i: Int :: (0<= i && i < length(freshArray)) ==> acc(loc(freshArray,i).val)) // allocate array
+  this.heap := freshArray
+
+  fold acc(IntHeap(this))
+}
+
+
+method add(this: Ref, value: Int)
+  requires acc(IntHeap(this)) && (unfolding acc(IntHeap(this)) in this.currentIndex < this.size)
+  ensures acc(IntHeap(this)) && (unfolding acc(IntHeap(this)) in this.currentIndex > 0) //&& elems(this) == old(elems(this)) union Set(unfolding IntHeap(this) in loc(this.heap,this.currentIndex-1).val)
+{
+  unfold acc(IntHeap(this))
+
+  var entry : Ref // new IntEntry
+  entry := new(ordinal)
+  inhale forall i: Int :: {loc(this.heap,i)} (0<= i && i < this.currentIndex) ==> loc(this.heap,i).val != entry // should come from object creation
+  updateValue(entry,value)
+
+  loc(this.heap,this.currentIndex).val := entry // heap[currentIndex] = entry
+
+  var index : Int := this.currentIndex
+  var parentIndex : Int := parent(index)
+  var parentEntry : Ref := loc(this.heap,parentIndex).val
+
+ 	this.currentIndex := this.currentIndex + 1
+
+  while(index > 0 && parentEntry.ordinal < entry.ordinal)
+    invariant acc(this.heap, 1/2) && acc(this.currentIndex, 1/2) && this.currentIndex <= length(this.heap)
+    invariant 0 <= parentIndex && parentIndex < this.currentIndex
+    invariant 0 <= index && index < this.currentIndex
+    invariant parent(index) == parentIndex
+    invariant forall i: Int :: (0<= i && i < length(this.heap)) ==> acc(loc(this.heap,i).val)
+    invariant entry == loc(this.heap,index).val
+    invariant parentEntry == loc(this.heap,parentIndex).val
+    invariant forall i: Int, j: Int :: {loc(this.heap,i),loc(this.heap,j)} (0 <= i && i < j && j < this.currentIndex) ==> loc(this.heap,i).val != loc(this.heap,j).val
+    invariant forall i: Int :: (0<= i && i < this.currentIndex) ==> acc(loc(this.heap,i).val.ordinal)
+   	invariant forall i: Int :: {loc(this.heap,i),parent(i)} // trigger
+   	                           (0< i && i < this.currentIndex && i!=index) ==> let p == (parent(i)) in comparisonBetter(loc(this.heap,i).val.ordinal, loc(this.heap,p).val.ordinal)
+  	{
+      loc(this.heap,parentIndex).val := entry
+      loc(this.heap,index).val := parentEntry
+
+       // some i for which parent(i) == index ? Seems not to be clear that the swap didn't break things..
+       assert forall i: Int :: (0< i && i < this.currentIndex && parent(i) == index) ==> comparisonBetter(loc(this.heap,i).val.ordinal, loc(this.heap,parent(i)).val.ordinal)
+       // FAILS: 109:8: Assert might fail. Assertion (forall i: Int :: (0 < i) && ((i < this.currentIndex) && (parent(i) == index)) ==> (loc(this.heap, i).val.ordinal < loc(this.heap, parent(i)).val.ordinal)) might not hold.
+
+      index := parentIndex
+      parentIndex := parent(index)
+      parentEntry := loc(this.heap,parentIndex).val
+	  }
+}
+
+
+// IntEntry class
+field ordinal : Int
+
+function getOrdinal(this: Ref) : Int // maybe macro
+  requires acc(this.ordinal)
+  {
+  	this.ordinal
+  }
+
+function betterThan(this: Ref, other: Ref) : Bool
+  requires acc(this.ordinal) && acc(other.ordinal)
+  ensures result == comparisonBetter(getOrdinal(this),getOrdinal(other))
+// optional body - postcondition is enough
+//{
+//	comparisonTest(getOrdinal(this),getOrdinal(other))
+//}
+
+method updateValue(this:Ref, value:Int)
+  requires acc(this.ordinal)
+  ensures acc(this.ordinal) && intValueToOrdinal(value) == getOrdinal(this)
+// ideally no body, but not implemented
+{ inhale false }
+
