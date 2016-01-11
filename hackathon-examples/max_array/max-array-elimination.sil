@@ -5,12 +5,14 @@ field val: Int
 domain IArray {
   function loc(a: IArray, i: Int): Ref
   function length(a: IArray): Int
-  
+  function inverse_first(r: Ref): IArray // array this slot belongs to
+  function inverse_second(r: Ref): Int // index of this array slot
+
   axiom all_diff {
-    forall a1: IArray, a2: IArray, i: Int, j: Int :: {loc(a1, i), loc(a2, j)}
-      (a1 != a2 || i != j) ==> loc(a1, i) != loc(a2, j)
+    forall a: IArray, i: Int :: {loc(a, i)}
+      inverse_first(loc(a, i)) == a && inverse_second(loc(a, i)) == i
   }
-  
+
   axiom length_nonneg {
     forall a: IArray :: length(a) >= 0
   }
@@ -28,7 +30,7 @@ method max(a: IArray) returns (x:Int)
         x := 0;
         y := length(a)-1;
 
-        while (x != y) 
+        while (x != y)
           invariant forall i: Int :: 0 <=i && i < length(a) ==> acc(loc(a, i).val)
           invariant 0 <= x && x <= y && y < length(a)
           invariant (forall i: Int :: ((0 <= i && i<x) || (y < i && i<length(a))) ==> loc(a,i).val < loc(a,x).val) || (forall i: Int :: ((0 <= i && i<x) || (y < i && i<length(a))) ==> loc(a,i).val <= loc(a,y).val)
