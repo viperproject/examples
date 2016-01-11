@@ -1,7 +1,12 @@
-see also
+2015-07-29 Malte
+  I removed Two-Way-Sort-Rec.sil since it is a duplicate of
+  silver-examples\hackathon-examples\two-way-sort\Two-Way-Sort-Rec.sil
 
-https://bitbucket.org/viperproject/silicon/issue/128/longer-running-test-cases-need-factoring
+2015-??-?? ??
+  see also
 
-and the referenced test cases
+    https://bitbucket.org/viperproject/silicon/issue/128/longer-running-test-cases-need-factoring
 
-the test cases quantifiedpermissions\sequences\bsearch.sil and quantifiedpermissions\misc\performance.sil 
+  and the referenced test cases
+
+  the test cases quantifiedpermissions\sequences\bsearch.sil and quantifiedpermissions\misc\performance.sil 

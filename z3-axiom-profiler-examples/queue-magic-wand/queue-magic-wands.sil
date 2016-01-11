@@ -1,0 +1,194 @@
+function prio(this: Ref): Int
+
+/*****************************************************************
+ * PQueue
+ *****************************************************************/
+
+field data: Ref
+field next: Ref
+
+field head : Ref
+
+predicate List(xs: Ref) {
+  acc(xs.head) && (xs.head != null ==> acc(PQueue(xs.head)))
+}
+
+predicate PQueue(xs: Ref) {
+     acc(xs.data) && acc(xs.next)
+  && (xs.next != null ==> acc(PQueue(xs.next)))
+  && (xs.next != null ==> prio(xs.data) <= prio(nodesContent(xs.next)[0]))
+}
+
+
+function content(xs:Ref) : Seq[Ref]
+  requires acc(List(xs))
+  ensures  forall i: Int, j: Int :: {prio(result[i]), prio(result[j])} 0 <= i && i < j && j < length(xs) ==> prio(result[i]) <= prio(result[j]) // NON-TERM
+{
+  unfolding List(xs) in (xs.head == null ? Seq[Ref]() : nodesContent(xs.head))
+}
+
+function nodesContent(xs: Ref): Seq[Ref]
+  requires acc(PQueue(xs))
+  ensures  forall i: Int, j: Int :: {prio(result[i]), prio(result[j])} 0 <= i && i < j && j < nodesLength(xs) ==> prio(result[i]) <= prio(result[j]) // NON-TERM
+{ unfolding PQueue(xs) in Seq(xs.data) ++ (xs.next == null ?  Seq[Ref]() : nodesContent(xs.next)) }
+
+function length(xs: Ref): Int
+  requires acc(List(xs))
+  ensures  result >= 0
+{ unfolding List(xs) in xs.head == null ? 0 : nodesLength(xs.head) }
+
+function nodesLength(xs: Ref): Int
+  requires acc(PQueue(xs))
+  ensures  result > 0
+{ 1 + unfolding PQueue(xs) in xs.next == null ? 0 : nodesLength(xs.next) }
+
+function itemAt(xs: Ref, i: Int): Ref
+  requires acc(List(xs))
+  requires 0 <= i && i < length(xs)
+  ensures  result == content(xs)[i]
+{ content(xs)[i] }
+
+function peek(xs: Ref): Ref
+  requires acc(PQueue(xs))
+  ensures  result == nodesContent(xs)[0]
+{ unfolding PQueue(xs) in xs.data }
+
+method insert(xs: Ref, x: Ref) returns (i: Int)
+  requires acc(List(xs))
+  ensures  acc(List(xs))
+  ensures  content(xs) == old(content(xs))[0..i] ++ Seq(x) ++ old(content(xs))[i..]
+{
+  var tmp: Ref
+  var crt: Ref
+  var nxt: Ref
+
+  unfold List(xs)
+
+  i := 0
+
+  var hd : Ref := xs.head
+
+  // if(hd == null || prio(x) <= prio(peek(hd))) // using "unfolding PQueue(hd) in prio(hd.data)" seems to cause Silicon to loop
+  if(hd == null || prio(x) <= unfolding PQueue(hd) in prio(hd.data)) // using "unfolding PQueue(hd) in prio(hd.data)" seems to cause Silicon to loop
+    {
+      assume hd != null
+      //assume hd != null ==> prio(x) > prio(peek(hd))
+      /* Create a new node with value x and append the list tail starting at nxt to it. */
+      tmp := new(data, next)
+      tmp.data := x
+      tmp.next := hd
+      fold PQueue(tmp)
+      xs.head := tmp
+    } else {
+      unfold PQueue(hd)
+
+  define A acc(PQueue(crt)) && peek(crt) == old(content(xs))[i]
+  define B acc(PQueue(hd)) && nodesContent(hd) == old(content(xs))[0..i] ++ lhs(nodesContent(crt))
+
+  crt := hd
+  nxt := hd.next
+
+  package A --* B
+
+  /* Find the appropriate position for x in the linked-list. After the loop,
+   * crt points to the first node in the list s.t. crt.next is either null,
+   * or crt.next.data >= x. nxt is always equal to crt.next.
+   */
+  while (nxt != null && prio(peek(nxt)) < prio(x))
+    invariant 0 <= i && i < |old(content(xs))|
+    invariant nxt == null ==> i == |old(content(xs))| - 1
+    invariant acc(crt.data) && acc(crt.next)
+    invariant nxt == crt.next
+    invariant crt.data == old(content(xs))[i]
+    invariant nxt != null ==> (acc(PQueue(nxt)) && nodesContent(nxt) == old(content(xs))[i+1..])
+    invariant prio(crt.data) < prio(x)
+    invariant nxt != null ==> prio(crt.data) <= prio(peek(nxt))
+    invariant A --* B
+  {
+    var prev: Ref := crt
+    wand w := A --* B
+
+    unfold PQueue(nxt)
+
+    crt := nxt
+    nxt := nxt.next
+    i := i + 1
+
+    package A --* folding PQueue(prev) in applying w in B
+  }
+  /* Create a new node with value x and append the list tail starting at nxt to it. */
+  var node: Ref
+  node := new(data, next)
+  node.data := x
+  node.next := nxt
+
+  fold PQueue(node)
+
+  /* Append the new node (and its tail) to the current node. */
+  crt.next := node
+  fold PQueue(crt)
+
+  /* Give up the sublist starting at crt and get back the original list *with*
+   * the newly inserted value.
+   */
+  apply A --* B
+
+  i := i + 1 // the indiced in the wand specs are out by one compared with the new postcondition
+ }
+ fold List(xs)
+}
+
+
+
+method dequeue(xs: Ref) returns (x: Ref)
+  requires acc(List(xs))
+  requires length(xs) > 0
+  ensures  x == old(content(xs)[0])
+  ensures  acc(List(xs))
+  ensures  content(xs) == old(content(xs)[1..])
+{
+  unfold acc(List(xs))
+  unfold acc(PQueue(xs.head))
+  x := xs.head.data
+  xs.head := xs.head.next
+  fold acc(List(xs))
+}
+
+// here is a version which worked before the refactoring (and is simpler than the previous one)
+// method dequeue(xs: Ref) returns (ys: Ref, x: Ref)
+//   requires acc(PQueue(xs))
+//   ensures  x == old(nodesContent(xs)[0])
+//   ensures  ys == null <==> old(nodesLength(xs)) == 1
+//   ensures  ys != null ==> acc(PQueue(ys)) && nodesContent(ys) == old(nodesContent(xs)[1..])
+// {
+//   unfold acc(PQueue(xs))
+//   x := xs.data
+//   ys := xs.next
+// }
+
+/*****************************************************************
+ * CLIENT
+ *****************************************************************/
+
+// monitor invariant
+// PQueue(xs) && old(log) <= log
+field held: Int
+field log: Seq[Ref]
+
+method client(xs: Ref)
+  // TODO: add a leak check once forallrefs is supported
+{
+  // acquire monitor, without deadlock checking
+  inhale acc(List(xs))
+  inhale acc(xs.held)
+  // TODO: add statelabel and check two-state invariant once labeled old-expressions are supported
+
+  if(length(xs) > 0) {
+    var x: Ref
+    x := dequeue(xs)
+  }
+
+  // release monitor
+  exhale acc(List(xs))
+  exhale acc(xs.held)
+}
