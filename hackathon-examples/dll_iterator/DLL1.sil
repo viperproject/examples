@@ -1,4 +1,9 @@
 /////////////////////////////////////////////////////////////////////
+//A double linked list with a borrowing forward iterator - 
+// the iterator maintains a reference to the list node with no permission to the list
+// and permission must be passed for all iterator methods (iterator borrows permissions for the duration of operation)
+
+/////////////////////////////////////////////////////////////////////
 //LinkedListNode
 
 field DLLN_val : Int
@@ -318,9 +323,11 @@ function DLL_aNodes(this : Ref) : Seq[Ref]
 field DLLI_node : Ref
 field DLLI_aDLL : Ref
 
+//A DLL Iterator
+
 predicate DLLI(this:Ref) {
 	this!=null &&
-	acc(this.DLLI_node,write) &&
+	acc(this.DLLI_node,write) && //We do not have any permission to node
 	this.DLLI_node!=null &&
 	acc(this.DLLI_aDLL,write) &&
 	this.DLLI_aDLL!=null
@@ -427,7 +434,7 @@ method DLLI_getValue(this : Ref) returns (r :  Int)
 	
 	assert r == old(DLL_aVal(DLLI_DLL(this))[DLLI_index(this)])
 }
-
+/* This needs to be debugged further - cannot establish the iterator index after next()
 method DLLI_next(this : Ref)
 	requires this!=null
 	requires acc(DLLI(this),write)
@@ -489,7 +496,7 @@ method DLLI_next(this : Ref)
 	fold acc(DLLI(this),write)
 	assert DLLI_DLL(this)!=null
 }
-
+*/
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////

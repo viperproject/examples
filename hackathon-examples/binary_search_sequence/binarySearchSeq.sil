@@ -6,14 +6,16 @@ method binary_search(array: Seq[Int], key: Int) returns (index: Int)
 {
   var low: Int := 0 
   var high: Int := |array|
+  var mid : Int
+  
   index := -1
-  while (low < high)
-      // the commented-out invariant is implicite since array is a local variable
-      // invariant forall i: Int, j: Int :: 0 <= i && j < |array| && i < j ==> array[i] < array[j]
+  while (low < high && index == -1)
       invariant 0 <= low && low <= high && high <= |array|
-      invariant forall i: Int :: (0 <= i && i < |array| && !(low <= i && i < high)) ==> array[i] != key
+      invariant index == -1 ==> forall i: Int :: (0 <= i && i < |array| && !(low <= i && i < high)) ==> array[i] != key
+      invariant -1 <= index && index < |array|
+      invariant 0 <= index ==> array[index] == key
   {
-    var mid: Int := (low + high) \ 2;
+    mid := (low + high) \ 2;
     if (array[mid] < key) {
       low := mid + 1;
     } else {
@@ -21,8 +23,8 @@ method binary_search(array: Seq[Int], key: Int) returns (index: Int)
          high := mid;
       } else {
         index := mid
+        high := mid
       }
     }
   }
-  index := -1
 }

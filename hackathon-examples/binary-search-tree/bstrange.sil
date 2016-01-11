@@ -1,0 +1,150 @@
+field left : Ref
+
+field right : Ref
+
+field value : Int
+
+predicate tree(root : Ref){
+	acc(root.value) && acc(root.left) && acc(root.right) 
+	&& (root.left != null ==> acc(tree(root.left))) 
+	&& (root.right != null ==> acc(tree(root.right)))
+}
+
+function range(node : Ref) : Seq[Int]
+	requires node != null
+	requires acc(bst(node))
+	ensures |result| == 2
+	ensures result[0] <= unfolding bst(node) in node.value
+	ensures result[1] >= unfolding bst(node) in node.value
+{
+	unfolding bst(node) in Seq(node.left == null ? node.value : range(node.left)[0]) ++ Seq(node.right == null ? node.value : range(node.right)[1])
+}
+
+predicate bst(root : Ref){
+	root != null &&
+	acc(root.value) && acc(root.left) && acc(root.right) 
+	&& (root.left != null ==> acc(bst(root.left))) 
+	&& (root.right != null ==> acc(bst(root.right)))  && 
+	 (
+		(root.left != null ==> range(root.left)[1] < root.value)
+		&& (root.right != null ==> range(root.right)[0] > root.value)
+	)
+}
+
+function contains(root : Ref, val : Int) : Bool
+	requires acc(bst(root))
+{
+	root != null ==> unfolding bst(root) in (root.value == val || (root.right != null && contains(root.right, val)) || (root.left != null && contains(root.left, val)))
+}
+
+method newNode(val : Int) returns (node : Ref) 
+	ensures node != null
+	ensures acc(bst(node))
+	ensures unfolding bst(node) in node.left == null && node.right == null
+	ensures unfolding bst(node) in node.value == val
+	ensures forall v : Int :: v != val ==> !contains(node, v)
+{
+	node := new(value, left, right)
+	node.left := null
+	node.right := null
+	node.value := val
+	fold bst(node)
+}
+
+function head(root : Ref) : Int
+	requires acc(bst(root)) && root != null
+{
+	unfolding bst(root) in root.value
+}
+
+method insertRec(root : Ref, val : Int, limit : Int)
+	requires root != null
+	requires acc(bst(root))
+	requires limit < val ==> limit < unfolding bst(root) in root.value
+	requires limit > val ==> limit > unfolding bst(root) in root.value
+	ensures root == old(root)
+	ensures acc(bst(root))
+	ensures head(root) == old(head(root))
+	ensures contains(root, val)
+	ensures forall v : Int :: old(contains(root, v)) ==> contains(root, v)
+	ensures forall v : Int :: old(!contains(root, v)) ==> v == val || !contains(root, v)
+	ensures old(range(root)[0] > limit && val > limit) ==> range(root)[0] > limit
+	ensures old(range(root)[1] < limit && val < limit) ==> range(root)[1] < limit
+	ensures old(range(root)[1] < val) ? range(root)[1] == val : range(root)[1] == old(range(root)[1])
+	ensures old(range(root)[0] > val) ? range(root)[0] == val : range(root)[0] == old(range(root)[0])
+{
+	var curRange : Seq[Int]
+	curRange := range(root)
+	unfold bst(root)
+	if (root.value != val){
+		if (root.value < val){
+			if (root.right == null){
+				var node : Ref
+				node := newNode(val)
+				root.right := node
+				assert contains(root.right, val)
+				fold acc(bst(root))
+			}else{
+				insertRec(root.right, val, root.value)
+				assert contains(root.right, val)
+				
+				fold bst(root) 
+			}
+		}else{
+			if (root.left == null){
+				var node1 : Ref
+				node1 := newNode(val)
+				root.left := node1
+				assert contains(root.left, val)
+				fold bst(root) 
+			}else{
+				insertRec(root.left, val, root.value)
+				assert contains(root.left, val)
+				fold bst(root) 
+			}
+		}
+	}else{
+		fold bst(root) 
+
+	}
+	
+}
+
+method insert(root : Ref, val : Int)
+	requires root != null
+	requires acc(bst(root))
+	ensures root == old(root)
+	ensures acc(bst(root))
+	ensures head(root) == old(head(root))
+	ensures contains(root, val)
+	ensures forall v : Int :: old(contains(root, v)) ==> contains(root, v)
+	ensures forall v : Int :: old(!contains(root, v)) ==> v == val || !contains(root, v)
+	ensures old(range(root)[1] < val) ? range(root)[1] == val : range(root)[1] == old(range(root)[1])
+	ensures old(range(root)[0] > val) ? range(root)[0] == val : range(root)[0] == old(range(root)[0])
+{
+	var curRange : Seq[Int]
+	curRange := range(root)
+	
+	insertRec(root, val, val > curRange[1] ? curRange[0] - 1 : curRange[1] + 1)
+}
+
+method main()
+{
+	var root : Ref
+	root := newNode(13)
+	assert contains(root, 13)
+	insert(root, 14)
+	assert contains(root, 14)
+	assert contains(root, 13)
+	
+	insert(root, 15)
+	assert contains(root, 15)
+	assert contains(root, 14)
+	assert contains(root, 13)
+	
+	insert(root, 1)
+	assert contains(root, 15)
+	assert contains(root, 14)
+	assert contains(root, 13)
+	assert !contains(root, 2)
+}

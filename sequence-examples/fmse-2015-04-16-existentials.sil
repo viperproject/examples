@@ -1,3 +1,10 @@
+/* Created by: Stefan?
+ *
+ * History:
+ *   2015-07-29 Malte
+ *     Fails in Silicon-QP (b644a5e28e71) in 2s: Contract might not be well-formed. Receiver of res[2 * i].Ref__Integer_value might be null.
+ */
+
 field Exercise4__Integer_value: Int
 
 field Ref__Integer_value: Int

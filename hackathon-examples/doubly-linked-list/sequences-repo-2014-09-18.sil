@@ -1,4 +1,12 @@
-/* [2015-03-12 Malte] Verified in about 25s */
+/* Created by: Peter
+ *
+ * History:
+ *   2015-07-29 Malte
+ *     Silicon (d07b47260c32) didn't terminate in a few minutes.
+ *     Haven't looked into it yet.
+ *   2015-03-12 Malte
+ *     Verified in about 25s
+ */
 
 // class DList
 field header: Ref
