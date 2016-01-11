@@ -89,7 +89,7 @@ method add(this: Ref, value: Int)
 
  	this.currentIndex := this.currentIndex + 1
 
-  while(index > 0 && parentEntry.ordinal < entry.ordinal)
+  while(index > 0 && betterThan(parentEntry,entry))
     invariant acc(this.heap, 1/2) && acc(this.currentIndex, 1/2) && this.currentIndex <= length(this.heap)
     invariant 0 <= parentIndex && parentIndex < this.currentIndex
     invariant 0 <= index && index < this.currentIndex
