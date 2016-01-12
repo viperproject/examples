@@ -1,1 +1,0 @@
-ptime z3 sat.random_seed=%RANDOM% nlsat.seed=%RANDOM% smt.random_seed=%RANDOM% sls.random_seed=%RANDOM% %*

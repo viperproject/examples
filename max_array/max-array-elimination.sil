@@ -1,13 +1,5 @@
-/* Finished solution for finding maximum in an array by elimination.
- *
- * Problem 1 of
- *   http://foveoos2011.cost-ic0701.org/verification-competition
- *
- * [2016-01-09 Malte]
- *   Unified method contract w.r.t. max-array-standard.sil and added a client
- *   Verifies in Silicon in about 1s
- *
- * [2015-??-?? Alex] Encoded original version
+/* Finding the maximum in an array by elimination.
+ * Problem 1 from http://foveoos2011.cost-ic0701.org/verification-competition
  */
 
 define access(a) forall j: Int :: 0 <= j && j < len(a) ==> acc(loc(a, j).val)
