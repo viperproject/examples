@@ -1,0 +1,5 @@
+{
+	"abc" : {"name" : "ABC", "description" : "This is an example about the alphabet", "category" : "Quantified Permissions"},
+	"whatever" : {"description" : "This is an example about whatever", "category" : "Quantified Permissions"},
+	"something" : {"name" : "Something amazing", "description" : "This is an example about nothing, really", "category" : "Magic Wands"}
+}
