@@ -1,47 +1,36 @@
+/* Binary search in a sorted array.
+ *
+ * [2016-01-10 Malte] Verifies in Silicon in 1s
+ * [2016-??-?? ???] Finished, but didn't work because of a bug in Silicon (axiom triggers)
+ */
+
 field val: Int
 
-domain IArray {
-  function loc(a: IArray, i: Int): Ref
-  function length(a: IArray): Int
-  function first(r: Ref): IArray
-  function second(r: Ref): Int
+define access(a) forall j: Int :: 0 <= j && j < len(a) ==> acc(loc(a, j).val)
+define untouched(a) forall j: Int :: 0 <= j && j < len(a) ==> loc(a, j).val == old(loc(a, j).val)
 
-  axiom all_diff {
-    forall a: IArray, i: Int :: {loc(a, i)}
-      first(loc(a, i)) == a && second(loc(a, i)) == i
-  }
-
-  axiom length_nonneg {
-    forall a: IArray :: length(a) >= 0
-  }
-}
-
-/**
-This example fails dute to triggre generation in Z3.
-**/
-
-method binary_search(a: IArray, key: Int) returns (index: Int) 
-  requires forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
-  requires forall i: Int, j: Int :: {loc(a, i), loc(a, j)} 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
-  ensures -1 <= index && index < length(a)
-  ensures forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
-  ensures 0 <= index ==> loc(a, index).val == key
-  ensures -1 == index ==> (forall i: Int :: 0 <= i && i < length(a) ==> loc(a,i).val != key)
+method binary_search(a: IArray, key: Int) returns (index: Int)
+  requires access(a)
+  requires forall i: Int, j: Int :: {loc(a, i), loc(a, j)} 0 <= i && j < len(a) && i < j ==> loc(a, i).val < loc(a, j).val
+  ensures  access(a) && untouched(a)
+  ensures  -1 <= index && index < len(a)
+  ensures  0 <= index ==> loc(a, index).val == key
+  ensures  -1 == index ==> (forall i: Int :: 0 <= i && i < len(a) ==> loc(a,i).val != key)
 {
   var low: Int := 0
-  var high: Int := length(a)
+  var high: Int := len(a)
   index := -1
-  while (low < high) 
-    invariant forall i: Int :: 0 <= i && i < length(a) ==> acc(loc(a, i).val)
-    invariant forall i: Int, j: Int :: 0 <= i && j < length(a) && i < j ==> loc(a, i).val < loc(a, j).val
-    invariant 0 <= low && low <= high && high <= length(a)
-    // The next line does not work due triggers in Z3
-    invariant index == -1 ==> forall i: Int :: {loc(a, i)}(0 <= i && i < length(a) && !(low <= i && i < high)) ==> loc(a, i).val != key
-    invariant -1 <= index && index < length(a)
+
+  while (low < high)
+    invariant access(a) && untouched(a)
+    invariant 0 <= low && low <= high && high <= len(a)
+    invariant index == -1 ==> forall i: Int :: {loc(a, i)}(0 <= i && i < len(a) && !(low <= i && i < high)) ==> loc(a, i).val != key
+    invariant -1 <= index && index < len(a)
     invariant 0 <= index ==> loc(a, index).val == key
   {
     var mid: Int := (low + high) \ 2
-    if (loc(a, mid).val < key) { 
+
+    if (loc(a, mid).val < key) {
       var oldLow: Int := low
       low := mid + 1
     } else {
@@ -52,5 +41,25 @@ method binary_search(a: IArray, key: Int) returns (index: Int)
         high := mid
       }
     }
+  }
+}
+
+
+
+/* Encoding of arrays */
+
+domain IArray {
+  function loc(a: IArray, i: Int): Ref
+  function len(a: IArray): Int
+  function first(r: Ref): IArray
+  function second(r: Ref): Int
+
+  axiom all_diff {
+    forall a: IArray, i: Int :: {loc(a, i)}
+      first(loc(a, i)) == a && second(loc(a, i)) == i
+  }
+
+  axiom length_nonneg {
+    forall a: IArray :: len(a) >= 0
   }
 }
