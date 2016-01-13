@@ -1,0 +1,75 @@
+domain Pair[T1,T2] {
+  function first(p : Pair[T1,T2]): T1
+  function second(p: Pair[T1,T2]): T2
+}
+
+domain Array {
+  function loc(a: Array, i: Int): Ref
+  function len(a: Array): Int
+  function inv_loc(r:Ref) : Pair[Array,Int]
+
+  axiom loc_injective {
+    forall a: Array, i: Int :: {loc(a, i)}
+      0 <= i && i < len(a) ==>
+      first(inv_loc(loc(a, i))) == a && second(inv_loc(loc(a, i))) == i
+  }
+
+  axiom length_nonneg {
+    forall a: Array :: len(a) >= 0
+  }
+}
+
+field val: Int // value of array slots - loc(this.elems,i).val
+field elems: Array
+field size : Int // how many array slots have been used
+
+predicate AList(this: Ref)
+{
+  acc(this.elems) && acc(this.size) && 0 <= this.size && this.size <= len(this.elems)
+  && (forall i:Int :: 0 <= i && i < len(this.elems) ==> acc(loc(this.elems,i).val))
+}
+
+method insert(this: Ref, elem: Int) returns (idx: Int)
+  requires acc(AList(this))
+  ensures  acc(AList(this))
+{
+  idx := 0
+  unfold acc(AList(this))
+
+  while (idx < this.size && loc(this.elems, idx).val < elem)
+    invariant acc(this.size,1/2) && acc(this.elems,1/2) && this.size <= len(this.elems)
+    invariant forall i: Int :: 0 <= i && i < len(this.elems) ==> acc(loc(this.elems,i).val, 1/2)
+    invariant 0 <= idx && idx <= this.size
+  {
+    idx := idx + 1
+  }
+
+  if(this.size == len(this.elems)) { // out of space - allocate double array size
+    var a : Array // allocate fresh array of double size:
+    inhale len(a) == len(this.elems) * 2 + 1 && forall i:Int :: 0 <= i && i < len(a) ==> acc(loc(a,i).val)
+    // simulate memcpy from old array to new
+    inhale forall i:Int :: 0 <= i && i < len(this.elems) ==> loc(a,i).val == loc(this.elems,i).val
+    this.elems := a
+  }
+
+  // shuffle the later elements forward
+  var t : Int := this.size
+  while (t > idx)
+    invariant acc(this.elems,1/2) && acc(this.size,1/2)
+    invariant (forall i:Int :: idx < i && i <= this.size ==> acc(loc(this.elems,i).val))
+    invariant acc(loc(this.elems,idx).val, 1/2) && idx <= t && t <= this.size
+  {
+    loc(this.elems,t).val := loc(this.elems,t-1).val
+    t := t - 1
+  }
+
+  loc(this.elems,idx).val := elem
+  this.size := this.size + 1
+
+  fold acc(AList(this))
+}
+
+/* Here is some text from the paper that we could use to document the online example:
+
+In lines \ref{qp-if}-\ref{qp-endif} we encode resizing the array. We model allocation of a new array by inhaling permissions to all of its array slots. Since we still have permission to the array slots of the current array (to be replaced), this implicitly expresses that the two arrays do not overlap in terms of locations. We can also write pure quantifiers (without permissions) in order to express constraints about the entire range of locations. For example, the assertion on line \ref{qp-memcpy} expresses an assumption across many slots of the two arrays; we use this assumption about the (as yet arbitrary) values of the new array to model a bulk update (or memcpy, in a C-like language) of the array locations (which we could alternatively achieve via another loop in the code). This ability to write pure quantifiers which range over heap locations to which quantified permissions are held makes this specification style flexible and powerful.
+*/
