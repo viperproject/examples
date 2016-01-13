@@ -1,0 +1,5 @@
+{
+	"abc" : {"name" : "ABC", "description" : "This is an example about the alphabet", "category" : "Quantified Permissions"},
+	"whatever" : {"shortDescription" : "Short description of whatever", "description" : "This is an example about whatever that is way too loooooooooooooong. ooooooong.", "category" : "Quantified Permissions"},
+	"subfolder/something" : {"name" : "Something amazing", "description" : "This is an example about nothing, really. In spite of that, it has a very elaborate description. Consisting of several sentences.", "category" : "Magic Wands"}
+}
