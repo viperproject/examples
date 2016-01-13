@@ -1,0 +1,124 @@
+field left: Ref
+field right: Ref
+field is_marked: Bool
+
+define INV(graph)
+	   !(null in graph)
+	&& (forall n: Ref :: n in graph ==> acc(n.left))
+	&& (forall n: Ref :: n in graph ==> acc(n.right))
+	&& (forall n: Ref :: n in graph ==> acc(n.is_marked))
+	/* The automatically chosen triggers are not always ideal, using hand-picked triggers
+	 * can improve performance, as in the case of the next two foralls.
+	 */
+	&& (forall n: Ref :: {n.left  in graph}{n in graph, n.left}
+			 	n in graph ==> (n.left  != null ==> n.left  in graph))
+	&& (forall n: Ref :: {n.right in graph}{n in graph, n.right}
+				n in graph ==> (n.right != null ==> n.right in graph))
+
+method trav_rec(graph: Set[Ref], node: Ref)
+	requires node in graph && INV(graph)
+	requires !node.is_marked
+
+	ensures node in graph && INV(graph)
+
+	/* We do not unmark nodes. This allows us to prove that the current node will be marked. */
+	ensures forall n: Ref :: n in graph ==> (old(n.is_marked) ==> n.is_marked)
+	ensures node.is_marked
+
+	/* The graph is not being modified. */
+	ensures forall n: Ref :: n in graph ==> (n.left == old(n.left))
+	ensures forall n: Ref :: n in graph ==> (n.right == old(n.right))
+
+	/* Propagation of the marker. */
+	ensures forall n: Ref :: n in graph ==> (old(!n.is_marked) && n.is_marked ==> (n.left == null || n.left.is_marked))
+	ensures forall n: Ref :: n in graph ==> (old(!n.is_marked) && n.is_marked ==> (n.right == null || n.right.is_marked))
+{
+	node.is_marked := true
+
+	if (node.left != null && !node.left.is_marked) {
+		trav_rec(graph, node.left)
+	}
+
+	if (node.right != null && !node.right.is_marked) {
+		trav_rec(graph, node.right)
+	}
+}
+
+method trav(graph: Set[Ref], node: Ref)
+	requires node in graph && INV(graph)
+
+	/* Initially all nodes are unmarked. */
+	requires forall n: Ref :: n in graph ==> !n.is_marked
+
+	ensures node in graph && INV(graph)
+	ensures node.is_marked
+
+	/* Marked nodes' children are also marked. */
+	ensures forall n: Ref :: n in graph ==> ((n.is_marked && n.left != null) ==> n.left.is_marked)
+	ensures forall n: Ref :: n in graph ==> ((n.is_marked && n.right != null) ==> n.right.is_marked)
+
+	/* Propagation of the marker. */
+	ensures forall n: Ref :: n in graph ==> (old(!n.is_marked) && n.is_marked ==> (n.left == null || n.left.is_marked))
+	ensures forall n: Ref :: n in graph ==> (old(!n.is_marked) && n.is_marked ==> (n.right == null || n.right.is_marked))
+
+{ trav_rec(graph, node) }
+
+method test1() {
+	var a: Ref; a := new(*); a.is_marked := false
+	var b: Ref; b := new(*); b.is_marked := false
+	var c: Ref; c := new(*); c.is_marked := false
+	var d: Ref; d := new(*); d.is_marked := false
+	var e: Ref; e := new(*); e.is_marked := false
+	var f: Ref; f := new(*); f.is_marked := false
+	var g: Ref; g := new(*); g.is_marked := false
+	var h: Ref; h := new(*); h.is_marked := false
+	var i: Ref; i := new(*); i.is_marked := false
+	var j: Ref; j := new(*); j.is_marked := false
+	var k: Ref; k := new(*); k.is_marked := false
+	var l: Ref; l := new(*); l.is_marked := false
+
+	a.left := b;    a.right := c
+	b.left := d;    b.right := e
+	c.left := e;    c.right := f
+	d.left := g;    d.right := h
+
+	e.left := h;    e.right := i
+	f.left := i;    f.right := j
+	g.left := d;    g.right := k
+	h.left := k;    h.right := null
+
+	i.left := null; i.right := l
+	j.left := l;    j.right := f
+	k.left := b;    k.right := null
+	l.left := null; l.right := c
+
+	var dg: Set[Ref] := Set(a, b, c, d, e, f, g, h, i, j, k, l)
+
+	inhale INV(dg)
+
+	assert forall n: Ref :: n in dg ==> !n.is_marked
+
+	trav(dg, a)
+
+	assert forall n: Ref :: n in dg ==> n.is_marked
+
+	assert false
+}
+
+method test2() {
+	var a: Ref; a := new(*); a.is_marked := false
+	var b: Ref; b := new(*); b.is_marked := false
+
+	a.left := a; a.right := a;
+	b.left := a; b.right := a;
+
+	var dg: Set[Ref] := Set(a, b)
+
+	inhale INV(dg)
+
+	assert forall n: Ref :: n in dg ==> !n.is_marked
+
+	trav(dg, a)
+
+	assert forall n: Ref :: n in dg ==> n.is_marked
+}
