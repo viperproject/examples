@@ -1,1 +1,9 @@
-test1223123
+field f : Ref
+
+field f2 : Int
+
+function func (a : Int) : Int
+	ensures result > a 
+{
+	a + 2
+}
