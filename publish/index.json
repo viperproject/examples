@@ -1,5 +1,25 @@
 {
-	"abc" : {"name" : "ABC", "description" : "This is an example about the alphabet", "category" : "Quantified Permissions"},
-	"whatever" : {"shortDescription" : "Short description of whatever", "description" : "This is an example about whatever that is way too loooooooooooooong. ooooooong.", "category" : "Quantified Permissions"},
-	"subfolder/something" : {"name" : "Something amazing", "description" : "This is an example about nothing, really. In spite of that, it has a very elaborate description. Consisting of several sentences.", "category" : "Magic Wands"}
+	"linked-list-predicates.sil": {
+		"name": "Linked-List (Predicates)",
+		"description": "Inserting into an ordered linked-list which is specified via a recursively-defined predicate. The loop invariant uses a recursively-defined list segment predicate to bookkeep permissions.",
+		"category": "VMCAI'16"
+	},
+
+	"linked-list-predicates-with-wands.sil": {
+		"name": "Linked-List (Magic Wands)",
+		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
+		"category": "VMCAI'16"
+	},
+
+	"arraylist-quantified-permissions.sil": {
+		"name": "Array-List (Quantified Permissions)",
+		"description": "Inserting into an array-list which is specified via quantified permissions (iterating separating conjunction).",
+		"category": "VMCAI'16"
+	},
+
+	"encoding-adts.sil": {
+		"name": "Encoding ADTs",
+		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
+		"category": "VMCAI'16"
+	}
 }
