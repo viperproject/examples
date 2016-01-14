@@ -24,7 +24,7 @@
 	},
 	
 	"VMCAI'16" : {
-		"description" : "This webpage contains the full examples references in the paper \"Viper: A Verification Infrastructure for Permission-Based Reasoning\" published at VMCAI 2016. The experimental data used for the paper can be found by following <a href=\"http://viper.ethz.ch/vmcai16_experimental_data.zip\">this link</a>. ",
+		"description" : "This webpage contains the full examples referenced in the paper \"Viper: A Verification Infrastructure for Permission-Based Reasoning\" published at VMCAI 2016. The experimental data used for the paper can be found by following <a href=\"http://viper.ethz.ch/vmcai16_experimental_data.zip\">this link</a>. ",
 		"isCategory" : true
 	}
 }
