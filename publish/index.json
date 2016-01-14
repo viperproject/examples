@@ -21,5 +21,10 @@
 		"name": "Encoding ADTs",
 		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
 		"category": "VMCAI'16"
+	},
+	
+	"VMCAI'16" : {
+		"description" : "This is a description of the VMCAI category. It contains a lot of useful information.",
+		"isCategory" : true
 	}
 }
