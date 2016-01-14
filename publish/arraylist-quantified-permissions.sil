@@ -5,148 +5,138 @@ domain Pair[T1,T2] {
 
 domain Array {
   function loc(a: Array, i: Int): Ref
-  function array_len(a: Array): Int
+  function len(a: Array): Int
   function inv_loc(r:Ref) : Pair[Array,Int]
 
   axiom loc_injective {
     forall a: Array, i: Int :: {loc(a, i)}
-      0 <= i && i < array_len(a) ==>
+      0 <= i && i < len(a) ==>
       first(inv_loc(loc(a, i))) == a && second(inv_loc(loc(a, i))) == i
   }
 
   axiom length_nonneg {
-    forall a: Array :: array_len(a) >= 0
+    forall a: Array :: len(a) >= 0
   }
 }
 
-field val: Int
-
+field val: Int // value of array slots - loc(this.elems,i).val
 field elems: Array
+field size : Int // how many array slots have been used
 
-field cur_length : Int // how many array slots have been used
-
-predicate List(this: Ref)
+predicate AList(this: Ref)
 {
-  acc(this.elems) && acc(this.cur_length) && 0 <= this.cur_length && this.cur_length <= array_len(this.elems) && array_len(this.elems) > 0
-  && (forall i:Int :: 0 <= i && i < array_len(this.elems) ==> acc(loc(this.elems,i).val))
+     acc(this.elems) && acc(this.size) && 0 <= this.size && this.size <= len(this.elems)
+  && 0 < len(this.elems)
+  && (forall i:Int :: 0 <= i && i < len(this.elems) ==> acc(loc(this.elems,i).val))
 }
 
 function length(this: Ref): Int
-  requires acc(List(this))
+  requires acc(AList(this))
   ensures result >= 0
 {
-  unfolding acc(List(this)) in this.cur_length
+  unfolding acc(AList(this)) in this.size
 }
 
 function itemAt(this: Ref, index: Int): Int
-  requires acc(List(this))
+  requires acc(AList(this))
   requires 0 <= index && index < length(this)
 {
-  unfolding acc(List(this)) in loc(this.elems,index).val
+  unfolding acc(AList(this)) in loc(this.elems,index).val
 }
-
-function content(this:Ref) : Seq[Int]
-  requires acc(List(this))
-  ensures |result| == length(this)
-  ensures forall i:Int :: 0 <= i && i < length(this) ==> result[i] == itemAt(this,i)
 
 
 method create() returns (this: Ref)
-  ensures acc(List(this))
-  ensures content(this) == Seq[Int]()
+  ensures acc(AList(this))
+  ensures length(this) == 0
 {
-  this := new(elems,cur_length)
+  this := new(elems,size)
   // new array of size 10
   var a : Array
-  inhale array_len(a) == 10
-  inhale forall i:Int :: 0 <= i && i < array_len(a) ==> acc(loc(a,i).val)
+  inhale len(a) == 10
+  inhale forall i:Int :: 0 <= i && i < len(a) ==> acc(loc(a,i).val)
 
-  this.cur_length := 0
+  this.size := 0
   this.elems := a
 
-  fold acc(List(this))
+  fold acc(AList(this))
 }
 
 
 method addAtEnd(this: Ref, elem: Int)
-  requires acc(List(this))
+  requires acc(AList(this))
   requires 0 < length(this) ==> itemAt(this, length(this) - 1) <= elem
-  ensures acc(List(this))
+  ensures acc(AList(this))
   ensures length(this) == old(length(this)) + 1
   ensures itemAt(this, length(this) - 1) == elem
-  ensures forall i: Int :: 0 <= i && i < length(this) - 1 ==> itemAt(this, i) == old(itemAt(this, i))
-  ensures content(this) == old(content(this)) ++ Seq(elem)
-  {
-    unfold acc(List(this))
+  ensures forall i: Int :: 0 <= i && i < old(length(this)) ==> itemAt(this, i) == old(itemAt(this, i))
+  ensures itemAt(this, old(length(this))) == elem
+{
+  unfold acc(AList(this))
 
-    if(this.cur_length == array_len(this.elems)) { // out of space - allocate double array size
-      var a : Array // fresh array
-      inhale array_len(a) == array_len(this.elems) * 2 && forall i:Int :: 0 <= i && i < array_len(a) ==> acc(loc(a,i).val)
-      // memcpy from old array to new
-      inhale forall i:Int :: 0 <= i && i < array_len(this.elems) ==> loc(a,i).val == loc(this.elems,i).val
-      this.elems := a
-    }
-    loc(this.elems,this.cur_length).val := elem
-    this.cur_length := this.cur_length + 1
-    fold acc(List(this))
+  if (this.size == len(this.elems)) { // out of space - allocate double array size
+    var a: Array // allocate fresh array of double size:
+    inhale len(a) == len(this.elems) * 2 && forall i: Int :: 0 <= i && i < len(a) ==> acc(loc(a,i).val)
+    // simulate memcpy from old array to new
+    inhale forall i:Int :: 0 <= i && i < len(this.elems) ==> loc(a,i).val == loc(this.elems,i).val
+    this.elems := a
   }
+
+  loc(this.elems, this.size).val := elem
+  this.size := this.size + 1
+
+  fold acc(AList(this))
+}
 
 
 
 method insert(this: Ref, elem: Int) returns (j: Int)
-  requires acc(List(this))
-  ensures acc(List(this))
-  ensures |content(this)| == |old(content(this))| + 1
-  ensures content(this) == old(content(this))[0..j] ++ Seq(elem) ++ old(content(this))[j..]
+  requires acc(AList(this))
+  ensures acc(AList(this))
+  ensures 0 <= j && j < length(this)
+  ensures length(this) == old(length(this)) + 1
+  ensures forall k: Int :: 0 <= k && k < j ==> itemAt(this, k) == old(itemAt(this, k))
+  ensures itemAt(this, j) == elem
+  ensures forall k: Int :: j < k && k < length(this) ==> itemAt(this, k) == old(itemAt(this, k - 1))
 {
   j := 0
   while (j < length(this) && itemAt(this,j) < elem)
-    invariant acc(List(this))
+    invariant acc(AList(this))
     invariant 0 <= j && j <= length(this)
     invariant j > 0 ==> itemAt(this,j-1) <= elem
-    invariant length(this) == old(length(this)) && forall k: Int :: {itemAt(this,k)} 0 <= k && k < length(this) ==> itemAt(this,k) == old(itemAt(this,k))
+    invariant length(this) == old(length(this))
+    invariant forall k: Int :: {itemAt(this,k)} 0 <= k && k < length(this) ==> itemAt(this,k) == old(itemAt(this,k))
   {
-    unfold acc(List(this))
+    unfold acc(AList(this))
     j := j + 1
-    fold acc(List(this))
+    fold acc(AList(this))
   }
-  unfold acc(List(this))
+  unfold acc(AList(this))
 
-  if(this.cur_length == array_len(this.elems)) { // out of space - allocate double array size
-    var a : Array // fresh array
-    inhale array_len(a) == array_len(this.elems) * 2 && forall i:Int :: 0 <= i && i < array_len(a) ==> acc(loc(a,i).val)
-    // memcpy from old array to new
-    inhale forall i:Int :: 0 <= i && i < array_len(this.elems) ==> loc(a,i).val == loc(this.elems,i).val
+  if(this.size == len(this.elems)) { // out of space - allocate double array size
+    var a : Array // allocate fresh array of double size:
+    inhale len(a) == len(this.elems) * 2 && forall i:Int :: 0 <= i && i < len(a) ==> acc(loc(a,i).val)
+    // simulate memcpy from old array to new
+    inhale forall i:Int :: {loc(a,i).val} 0 <= i && i < len(this.elems) ==> loc(a,i).val == loc(this.elems,i).val
     this.elems := a
   }
 
-  var t : Int := this.cur_length
+  var t : Int := this.size
 
   // shuffle the later elements forward
   while (t > j)
-    invariant acc(this.elems,1/2) && acc(this.cur_length,1/2) && acc(loc(this.elems,j).val, 1/2)
-    invariant (forall i:Int :: j < i && i <= this.cur_length ==> acc(loc(this.elems,i).val))
-    invariant j <= t && t <= this.cur_length
-    invariant this.cur_length == old(length(this))
-    invariant forall i: Int :: {loc(this.elems,i)} j <= i && i <= this.cur_length ==> (i < t ==> loc(this.elems,i).val == old(itemAt(this,i)))
-    invariant forall i: Int :: {loc(this.elems,i)} j < i && i <= this.cur_length ==> (i > t ==> loc(this.elems,i).val == old(itemAt(this,i-1)))
+    invariant acc(this.elems,1/2) && acc(this.size,1/2) && acc(loc(this.elems,j).val, 1/2)
+    invariant (forall i:Int :: j < i && i <= this.size ==> acc(loc(this.elems,i).val))
+    invariant j <= t && t <= this.size
+    invariant this.size == old(length(this))
+    invariant forall i: Int :: {loc(this.elems,i)} j <= i && i <= this.size ==> (i < t ==> loc(this.elems,i).val == old(itemAt(this,i)))
+    invariant forall i: Int :: {loc(this.elems,i)} j < i && i <= this.size ==> (i > t ==> loc(this.elems,i).val == old(itemAt(this,i-1)))
   {
     loc(this.elems,t).val := loc(this.elems,t-1).val
     t := t - 1
   }
 
   loc(this.elems,j).val := elem
-  this.cur_length := this.cur_length + 1
+  this.size := this.size + 1
 
-  fold acc(List(this))
+  fold acc(AList(this))
 }
-
-//method dequeue(this: Ref) returns (res: Ref)
-//  requires acc(List(this))
-//  requires 0 < length(this)
-//  ensures acc(List(this))
-//  ensures res == old(content(this)[0])
-//  ensures content(this) == old(content(this)[1..])
-//{
-//
-//}
