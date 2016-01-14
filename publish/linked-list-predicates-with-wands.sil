@@ -1,5 +1,3 @@
-field __CONFIG_HEURISTICS: Bool
-
 /*****************************************************************
  * List Nodes
  *****************************************************************/
@@ -25,7 +23,6 @@ function contentNodes(this: Ref, end: Ref): Seq[Int]
                     Seq(this.data) ++ contentNodes(this.next, end)
                 )
 }
-
 
 function lengthNodes(this: Ref, end: Ref): Int
   requires acc(lseg(this, end))
@@ -80,24 +77,6 @@ method create() returns (this: Ref)
   fold acc(List(this))
 }
 
-method concat(this: Ref, ptr: Ref, end: Ref)
-  requires acc(lseg(this, ptr))
-  requires acc(lseg(ptr, end))
-  requires end != null ==> acc(end.next, 1/2)
-  requires 0 < |contentNodes(this, ptr)| && 0 < |contentNodes(ptr, end)| ==>
-             contentNodes(this, ptr)[|contentNodes(this, ptr)|-1] <= contentNodes(ptr, end)[0]
-  ensures  acc(lseg(this, end))
-  ensures contentNodes(this, end) == old(contentNodes(this, ptr) ++ contentNodes(ptr, end))
-  ensures end != null ==> acc(end.next, 1/2)
-{
-  if(this != ptr)
-  {
-    unfold acc(lseg(this, ptr))
-    concat(this.next, ptr, end)
-    fold acc(lseg(this, end))
-  }
-}
-
 method insert(this: Ref, elem: Int) returns (index: Int)
   requires acc(List(this))
   ensures acc(List(this))
@@ -126,20 +105,41 @@ method insert(this: Ref, elem: Int) returns (index: Int)
     fold acc(lseg(this.head, ptr))
     index := index + 1
 
-package acc(lseg(ptr, null)) --* acc(lseg(hd, null))
+    define A acc(lseg(ptr, null)) && contentNodes(ptr, null)[0] == old(content(this))[index-1]
+    define B acc(lseg(hd, null)) && contentNodes(hd, null) == old(content(this))[0..index-1] ++ lhs(contentNodes(ptr, null))
+      /* In a wand such as
+       *   A --* ... lhs(e)
+       * lhs(e) means that expression e is evaluated in the state in which the wand will have
+       * been applied, i.e. in which A held.
+       * In the above wand
+       *   acc(lseg(ptr, null)) ... --* ... ++ lhs(contentNodes(ptr, null))
+       * this means that the nodes that are provided when the wand is applied are appended
+       * to those that make up the footprint of the wand. In effect, the already traversed
+       * prefix of the list (the wand's footprint) and the (potentially) yet to traverse
+       * suffix of the list (lseg(ptr, null)) will be concatenated, yielding the final
+       * result list.
+       */
+
+    package A --* B
 
     while(ptr.next != null && unfolding acc(lseg(ptr.next, null)) in ptr.next.data < elem)
-      invariant acc(lseg(ptr, null)) --* acc(lseg(hd, null))
-      invariant acc(ptr.next) && acc(ptr.data)
-      invariant acc(lseg(ptr.next, null))
+      invariant acc(ptr.next) && acc(ptr.data) && acc(lseg(ptr.next, null))
+      invariant 1 <= index && index <= |old(content(this))|
+      invariant ptr.next == null ==> index == |old(content(this))|
+      invariant ptr.data == old(content(this))[index-1]
+      invariant ptr.next != null ==> contentNodes(ptr.next, null) == old(content(this))[index..]
+      invariant ptr.data < elem
+      invariant ptr.next != null ==> ptr.data <= unfolding acc(lseg(ptr.next, null)) in ptr.next.data
+      invariant A --* B
     {
-assume false
+      var prev: Ref := ptr
+      wand w := A --* B
+
       unfold acc(lseg(ptr.next, null))
       index := index + 1
-      //var last: Ref := ptr
       ptr := ptr.next
 
-      //assert  acc(lseg(this.next, end))
+      package A --* folding acc(lseg(prev, null)) in applying w in B
     }
 
     tmp := new(*)
@@ -150,7 +150,8 @@ assume false
     // apply the wand to obtain the full list
     fold acc(lseg(ptr.next, null))
     fold acc(lseg(ptr, null))
-    apply acc(lseg(ptr, null)) --* acc(lseg(hd, null))
+
+    apply A --* B
   }
 
   fold acc(List(this))
