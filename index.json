@@ -1,0 +1,48 @@
+{
+  "binary-search-sequence/binary-search-array" : {
+    "name": "Binary Search (Array)",
+    "description": "",
+    "category": "Viper Examples"
+  },
+  
+  "binary-search-sequence\binary-search-seq" : {
+    "name": "Binary Search (Seq)",
+    "description": "",
+    "category": "Viper Examples"
+  },
+
+  "graph-copy\graph-copy" : {
+    "name": "Graph Copy",
+    "description": "",
+    "category": "Viper Examples"
+  },
+
+  "graph-marking\graph-marking" : {
+    "name": "Graph Marking",
+    "description": "",
+    "category": "Viper Examples"
+  },
+
+  "max_array\max-array-elimination" : {
+    "name": "Array Max (by elimination)",
+    "description": "",
+    "category": "Viper Examples"
+  },
+
+  "max_array\max-array-standard" : {
+    "name": "Array Max (straight-forward)",
+    "description": "",
+    "category": "Viper Examples"
+  },
+  
+  "quickselect\arrays_quickselect_rec" : {
+    "name": "Quickselect",
+    "description": "",
+    "category": "Viper Examples"
+  },
+    
+  "Viper Examples" : {
+		"description" : "This webpage showcases several interesting examples that demonstrate features of the <a href="http://www.pm.inf.ethz.ch/research/viper.html">Viper verification infrastructure</a>",
+		"isCategory" : true
+	}
+}
