@@ -74,5 +74,5 @@
 		"name": "Encoding ADTs",
 		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
 		"category": "Viper Examples"
-	},
+	}
 }
