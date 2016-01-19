@@ -41,8 +41,8 @@
     "category": "Viper Examples"
   },
     
-  "Viper Examples" : {
-		"description" : "This webpage showcases several interesting examples that demonstrate features of the <a href="http://www.pm.inf.ethz.ch/research/viper.html">Viper verification infrastructure</a>",
+  "Viper Examples": {
+		"description" : "This webpage showcases several interesting examples that demonstrate features of the <a href=\"http://www.pm.inf.ethz.ch/research/viper.html\">Viper verification infrastructure</a>",
 		"isCategory" : true
 	}
 }
