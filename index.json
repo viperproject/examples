@@ -1,4 +1,12 @@
 {
+  "Viper Examples": {
+		"description" : "This webpage showcases several interesting examples that demonstrate features of the <a href=\"http://www.pm.inf.ethz.ch/research/viper.html\">Viper verification infrastructure</a>",
+		"isCategory" : true
+	},
+
+  
+  
+  
   "binary-search-sequence/binary-search-array" : {
     "name": "Binary Search (Array)",
     "description": "",
@@ -40,9 +48,31 @@
     "description": "",
     "category": "Viper Examples"
   },
-    
-  "Viper Examples": {
-		"description" : "This webpage showcases several interesting examples that demonstrate features of the <a href=\"http://www.pm.inf.ethz.ch/research/viper.html\">Viper verification infrastructure</a>",
-		"isCategory" : true
-	}
+  
+  
+  
+  
+  "vmcai2016/linked-list-predicates": {
+		"name": "Linked-List (Predicates)",
+		"description": "Inserting into an ordered linked-list which is specified via a recursively-defined predicate. The loop invariant uses a recursively-defined list segment predicate to bookkeep permissions.",
+		"category": "Viper Examples"
+	},
+
+	"vmcai2016/linked-list-predicates-with-wands": {
+		"name": "Linked-List (Magic Wands)",
+		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
+		"category": "Viper Examples"
+	},
+
+	"vmcai2016/arraylist-quantified-permissions": {
+		"name": "Array-List (Quantified Permissions)",
+		"description": "Inserting into an array-list which is specified via quantified permissions (iterating separating conjunction).",
+		"category": "Viper Examples"
+	},
+
+	"vmcai2016/encoding-adts": {
+		"name": "Encoding ADTs",
+		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
+		"category": "Viper Examples"
+	},
 }
