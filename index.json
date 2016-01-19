@@ -7,45 +7,45 @@
   
   
   
-  "binary-search-sequence/binary-search-array" : {
+  "binary-search/binary-search-array" : {
     "name": "Binary Search (Array)",
-    "description": "",
+    "description": "Binary search in a sorted (mutable) array",
     "category": "Viper Examples"
   },
   
-  "binary-search-sequence/binary-search-seq" : {
+  "binary-search/binary-search-seq" : {
     "name": "Binary Search (Seq)",
-    "description": "",
+    "description": "Binary search in a sorted (mathematical) sequence",
     "category": "Viper Examples"
   },
 
   "graph-copy/graph-copy" : {
     "name": "Graph Copy",
-    "description": "",
+    "description": "Duplicating a heap-allocated (mutable) graph",
     "category": "Viper Examples"
   },
 
   "graph-marking/graph-marking" : {
     "name": "Graph Marking",
-    "description": "",
+    "description": "A graph marking algorithm (in the spirit of mark-and-sweep garbage collectors)",
     "category": "Viper Examples"
   },
 
   "max_array/max-array-elimination" : {
     "name": "Array Max (by elimination)",
-    "description": "",
+    "description": "Finding the maximum in an array by elimination (COST IC0701 Verification Competition 2011)",
     "category": "Viper Examples"
   },
 
   "max_array/max-array-standard" : {
     "name": "Array Max (straight-forward)",
-    "description": "",
+    "description": "Finding the maximum in an array the straight-forward way",
     "category": "Viper Examples"
   },
   
   "quickselect/arrays_quickselect_rec" : {
     "name": "Quickselect",
-    "description": "",
+    "description": "An encoding of the Quickselect algorithm over arrays",
     "category": "Viper Examples"
   },
   
