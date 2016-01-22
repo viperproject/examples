@@ -54,7 +54,7 @@ method partition(a: IArray, left: Int, right: Int, pivotIndex: Int) returns (sto
   /* pw witnesses a permutation of the array segment */
   ensures |pw| == right + 1
   ensures forall i: Int :: left <= i && i <= right ==> left <= pw[i] && pw[i] <= right
-  ensures forall i: Int, j: Int :: left <= i && i < j && j <= right ==> pw[i] != pw[j]
+  ensures forall i: Int, k: Int :: left <= i && i < k && k <= right ==> pw[i] != pw[k]
   /* The array segment has been permuted */
   ensures permuted(a, left, right, pw)
 {
