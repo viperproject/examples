@@ -27,7 +27,7 @@
 
   "graph-marking/graph-marking" : {
     "name": "Graph Marking",
-    "description": "A graph marking algorithm (in the spirit of mark-and-sweep garbage collectors)",
+    "description": "A graph marking algorithm (in the spirit of mark-and-sweep garbage collectors). Note that the example is supposed to yield 1 verification error (the encoding of a false reachability check).",
     "category": "Viper Examples"
   },
 
@@ -60,7 +60,7 @@
 
 	"vmcai2016/linked-list-predicates-with-wands": {
 		"name": "Linked-List (Magic Wands)",
-		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
+		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions. Note: this example uses a feature which is currently only supported by the default verifier.",
 		"category": "Viper Examples"
 	},
 
@@ -72,7 +72,7 @@
 
 	"vmcai2016/encoding-adts": {
 		"name": "Encoding ADTs",
-		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
+		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check. Note that the example is supposed to yield 1 verification error (the encoding of a failed exhaustiveness check).",
 		"category": "Viper Examples"
 	}
 }
