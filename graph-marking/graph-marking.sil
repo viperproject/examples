@@ -2,15 +2,16 @@ field left: Ref
 field right: Ref
 field is_marked: Bool
 
+/* Automatically chosen triggers are not always ideal, using hand-picked triggers can improve
+ * performance noticeably, as witnessed by this example.
+ */
+
 define INV(nodes)
 	   !(null in nodes)
 	&& (forall n: Ref :: n in nodes ==> acc(n.left))
 	&& (forall n: Ref :: n in nodes ==> acc(n.right))
 	&& (forall n: Ref :: n in nodes ==> acc(n.is_marked))
-	/* The automatically chosen triggers are not always ideal, using hand-picked triggers
-	 * can improve performance, as in the case of the next two foralls.
-	 */
-	&& (forall n: Ref :: {n.left  in nodes}{n in nodes, n.left}
+	&& (forall n: Ref :: {n.left in nodes}{n in nodes, n.left}
 			 	n in nodes && n.left  != null ==> n.left  in nodes)
 	&& (forall n: Ref :: {n.right in nodes}{n in nodes, n.right}
 				n in nodes && n.right != null ==> n.right in nodes)
@@ -22,16 +23,18 @@ method trav_rec(nodes: Set[Ref], node: Ref)
 	ensures node in nodes && INV(nodes)
 
 	/* We do not unmark nodes. This allows us to prove that the current node will be marked. */
-	ensures forall n: Ref :: n in nodes ==> (old(n.is_marked) ==> n.is_marked)
+	ensures forall n: Ref :: {n in nodes, n.is_marked} n in nodes ==> (old(n.is_marked) ==> n.is_marked)
 	ensures node.is_marked
 
 	/* The nodes is not being modified. */
-	ensures forall n: Ref :: n in nodes ==> (n.left == old(n.left))
-	ensures forall n: Ref :: n in nodes ==> (n.right == old(n.right))
+	ensures forall n: Ref :: {n in nodes, n.left} n in nodes ==> (n.left == old(n.left))
+	ensures forall n: Ref :: {n in nodes, n.right} n in nodes ==> (n.right == old(n.right))
 
 	/* Propagation of the marker. */
-	ensures forall n: Ref :: n in nodes ==> (old(!n.is_marked) && n.is_marked ==> (n.left == null || n.left.is_marked))
-	ensures forall n: Ref :: n in nodes ==> (old(!n.is_marked) && n.is_marked ==> (n.right == null || n.right.is_marked))
+	ensures forall n: Ref :: {n in nodes, n.is_marked}{n in nodes, n.left.is_marked}
+            n in nodes ==> (old(!n.is_marked) && n.is_marked ==> (n.left == null || n.left.is_marked))
+	ensures forall n: Ref :: {n in nodes, n.is_marked}{n in nodes, n.right.is_marked}
+	          n in nodes ==> (old(!n.is_marked) && n.is_marked ==> (n.right == null || n.right.is_marked))
 {
 	node.is_marked := true
 
@@ -47,36 +50,14 @@ method trav_rec(nodes: Set[Ref], node: Ref)
 method client_success() {
 	var a: Ref; a := new(*); a.is_marked := false
 	var b: Ref; b := new(*); b.is_marked := false
-	var c: Ref; c := new(*); c.is_marked := false
-	var d: Ref; d := new(*); d.is_marked := false
-	var e: Ref; e := new(*); e.is_marked := false
-	var f: Ref; f := new(*); f.is_marked := false
-	var g: Ref; g := new(*); g.is_marked := false
-	var h: Ref; h := new(*); h.is_marked := false
-	var i: Ref; i := new(*); i.is_marked := false
-	var j: Ref; j := new(*); j.is_marked := false
-	var k: Ref; k := new(*); k.is_marked := false
-	var l: Ref; l := new(*); l.is_marked := false
 
-	a.left := b;    a.right := c
-	b.left := d;    b.right := e
-	c.left := e;    c.right := f
-	d.left := g;    d.right := h
+	a.left := b;    a.right := null
+	b.left := null; b.right := a
 
-	e.left := h;    e.right := i
-	f.left := i;    f.right := j
-	g.left := d;    g.right := k
-	h.left := k;    h.right := null
-
-	i.left := null; i.right := l
-	j.left := l;    j.right := f
-	k.left := b;    k.right := null
-	l.left := null; l.right := c
-
-	var nodes: Set[Ref] := Set(a, b, c, d, e, f, g, h, i, j, k, l)
+	var nodes: Set[Ref] := Set(a, b)
 
 	assert forall n: Ref :: n in nodes ==> !n.is_marked
-
+  
 	trav_rec(nodes, a)
 
 	assert forall n: Ref :: n in nodes ==> n.is_marked

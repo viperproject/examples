@@ -1,0 +1,12 @@
+{
+	"../vmcai2016/arraylist-quantified-permissions": {
+		"name": "Array-List",
+		"description": "Inserting into an array-list which is specified via iterating separating conjunctions (quantified permissions).",
+		"category": "CAV'16"
+	},
+
+	"CAV'16" : {
+		"description" : "This webpage contains the full examples referenced in the paper \"Automatic Verification of Iterated Separating Conjunctions using Symbolic Execution\" submitted to CAV 2016. The experimental data used for the paper can be found by following <a href=\"http://viper.ethz.ch/cav16_experimental_data.zip\">this link</a>. ",
+		"isCategory" : true
+	}
+}
