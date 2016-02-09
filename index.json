@@ -48,6 +48,12 @@
     "description": "An encoding of the Quickselect algorithm over arrays",
     "category": "Viper Examples"
   },
+    
+  "tree-delete-min/tree_delete_min" : {
+    "name": "Iterative Tree Delete",
+    "description": "Deletion of minimal tree element (VerifyThis@FM2012)",
+    "category": "Viper Examples"
+  },
   
   
   
