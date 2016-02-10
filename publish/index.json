@@ -1,0 +1,30 @@
+{
+	"linked-list-predicates": {
+		"name": "Linked-List (Predicates)",
+		"description": "Inserting into an ordered linked-list which is specified via a recursively-defined predicate. The loop invariant uses a recursively-defined list segment predicate to bookkeep permissions.",
+		"category": "VMCAI'16"
+	},
+
+	"linked-list-predicates-with-wands": {
+		"name": "Linked-List (Magic Wands)",
+		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
+		"category": "VMCAI'16"
+	},
+
+	"arraylist-quantified-permissions": {
+		"name": "Array-List (Quantified Permissions)",
+		"description": "Inserting into an array-list which is specified via quantified permissions (iterating separating conjunction).",
+		"category": "VMCAI'16"
+	},
+
+	"encoding-adts": {
+		"name": "Encoding ADTs",
+		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check.",
+		"category": "VMCAI'16"
+	},
+	
+	"VMCAI'16" : {
+		"description" : "This webpage contains the full examples referenced in the paper \"Viper: A Verification Infrastructure for Permission-Based Reasoning\" published at VMCAI 2016. The experimental data used for the paper can be found by following <a href=\"http://viper.ethz.ch/experimental_data.zip\">this link</a>. ",
+		"isCategory" : true
+	}
+}
