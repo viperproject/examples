@@ -7,6 +7,12 @@
   
   
   
+  "blank-example" : {
+    "name": "Empty Example (try your own!)",
+    "description": "Use this buffer to input and verify a new example, or choose an existing example from the menu",
+    "category": "Viper Examples"
+  },
+  
   "binary-search/binary-search-array" : {
     "name": "Binary Search (Array)",
     "description": "Binary search in a sorted (mutable) array",
