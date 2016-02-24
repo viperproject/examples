@@ -81,12 +81,12 @@
 		"name": "Encoding ADTs",
 		"description": "An encoding of a Haskell-style Nil-Cons-list, alongside proofs of certain properties of the encoded abstract data type, and a pattern match exhaustiveness check. Note that the example is supposed to yield 1 verification error (the encoding of a failed exhaustiveness check).",
 		"category": "Viper Examples"
-	}
+	},
 	
-	  "blank-example" : {
+	"blank-example" : {
 	    "name": "Empty Example (try your own!)",
 	    "description": "Input and verify a new example of your own",
 	    "category": "Viper Examples"
-	  },
+	  }
   
 }
