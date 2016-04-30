@@ -26,7 +26,7 @@ method trav_rec(nodes: Set[Ref], node: Ref)
 	ensures forall n: Ref :: {n in nodes, n.is_marked} n in nodes ==> (old(n.is_marked) ==> n.is_marked)
 	ensures node.is_marked
 
-	/* The nodes is not being modified. */
+	/* The nodes are not being modified. */
 	ensures forall n: Ref :: {n in nodes, n.left} n in nodes ==> (n.left == old(n.left))
 	ensures forall n: Ref :: {n in nodes, n.right} n in nodes ==> (n.right == old(n.right))
 
