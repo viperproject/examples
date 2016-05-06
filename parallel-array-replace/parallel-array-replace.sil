@@ -37,20 +37,18 @@ method Replace(a: Array, left: Int, right: Int, from: Int, to: Int)
   }
 }
 
-method Client(a: Array, b: Array)
-  requires 0 < len(a) && 0 < len(b)
+method Client(a: Array)
+  requires 1 < len(a)
   requires forall i: Int :: 0 <= i && i < len(a) ==> acc(loc(a, i).val)
-  requires forall i: Int :: 0 <= i && i < len(b) ==> acc(loc(b, i).val)
-  requires ItemAt(b,0) == 5
+  requires Contains(a, 5, 1)
 {
-  Replace(a, 0, len(a), 5, 7)
-  assert ItemAt(b,0) == 5  // uses function framing
+  Replace(a, 1, len(a), 5, 7)
+  assert Contains(a, 5, 1)  // Requires function framing
 }
 
-function ItemAt(a: Array, i: Int): Int
-  requires 0 <= i && i < len(a)
-  requires acc(loc(a, i).val)
-{ loc(a, i).val }
+function Contains(a: Array, v: Int, before: Int): Bool
+  requires 0 <= before && before <= len(a)
+  requires forall i: Int :: 0 <= i && i < before ==> acc(loc(a, i).val)
 
 /* Encoding of arrays */
 
