@@ -9,7 +9,7 @@
   
 
   "binary-search/binary-search-array" : {
-    "name": "Binary Search (Array)",
+    "name": "Binary Search (Quantified Permissions)",
     "description": "Binary search in a sorted (mutable) array",
     "category": "Viper Examples"
   },
@@ -21,41 +21,52 @@
   },
 
   "graph-copy/graph-copy" : {
-    "name": "Graph Copy",
+    "name": "Graph Copy (Quantified Permissions)",
     "description": "Duplicating a heap-allocated (mutable) graph",
     "category": "Viper Examples"
   },
 
   "graph-marking/graph-marking" : {
-    "name": "Graph Marking",
+    "name": "Graph Marking (Quantified Permissions)",
     "description": "A graph marking algorithm (in the spirit of mark-and-sweep garbage collectors). Note that the example is supposed to yield 1 verification error (the encoding of a false reachability check).",
     "category": "Viper Examples"
   },
 
   "max_array/max-array-elimination" : {
-    "name": "Array Max (by elimination)",
+    "name": "Array Max, by elimination (Quantified Permissions)",
     "description": "Finding the maximum in an array by elimination (COST IC0701 Verification Competition 2011)",
     "category": "Viper Examples"
   },
 
   "max_array/max-array-standard" : {
-    "name": "Array Max (straight-forward)",
+    "name": "Array Max, straight-forward (Quantified Permissions)",
     "description": "Finding the maximum in an array the straight-forward way",
     "category": "Viper Examples"
   },
   
   "quickselect/arrays_quickselect_rec" : {
-    "name": "Quickselect",
+    "name": "Quickselect (Quantified Permissions)",
     "description": "An encoding of the Quickselect algorithm over arrays",
     "category": "Viper Examples"
   },
     
   "tree-delete-min/tree_delete_min" : {
-    "name": "Iterative Tree Delete",
+    "name": "Iterative Tree Delete (Magic Wands)",
     "description": "Deletion of minimal tree element (VerifyThis@FM2012)",
     "category": "Viper Examples"
   },
   
+  "parallel-array-replace/parallel-array-replace" : {
+    "name": "Parallel Array Replace (Quantified Permissions)",
+    "description": "Running example from the CAV'16 paper: replace each occurrence of an element in an array segment by recursing over the two half-segments in parallel.",
+    "category": "CAV'16"
+  },
+  
+  "longest-common-prefix/longest-common-prefix" : {
+    "name": "Longest Common Prefix (Quantified Permissions)",
+    "description": "Challenge from the VerifyThis Verification Competition 2012: finding the longest common prefix in an array.",
+    "category": "CAV'16"
+  },
   
   
   
