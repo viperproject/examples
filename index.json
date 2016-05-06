@@ -59,13 +59,13 @@
   "parallel-array-replace/parallel-array-replace" : {
     "name": "Parallel Array Replace (Quantified Permissions)",
     "description": "Running example from the CAV'16 paper: replace each occurrence of an element in an array segment by recursing over the two half-segments in parallel.",
-    "category": "CAV'16"
+    "category": "Viper Examples"
   },
   
   "longest-common-prefix/longest-common-prefix" : {
     "name": "Longest Common Prefix (Quantified Permissions)",
     "description": "Challenge from the VerifyThis Verification Competition 2012: finding the longest common prefix in an array.",
-    "category": "CAV'16"
+    "category": "Viper Examples"
   },
   
   
