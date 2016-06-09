@@ -20,6 +20,12 @@
     "category": "Viper Examples"
   },
 
+  "dutch-flag/dutch-flag" : {
+    "name": "Dutch Flag (Quantified Permissions)",
+    "description": "Dutch Flag algorithm for coarse sorting of an array",
+    "category": "Viper Examples"
+  },
+
   "graph-copy/graph-copy" : {
     "name": "Graph Copy (Quantified Permissions)",
     "description": "Duplicating a heap-allocated (mutable) graph",
