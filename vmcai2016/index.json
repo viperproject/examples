@@ -1,18 +1,30 @@
 {
+	"sorted-list-immutable-sequence": {
+		"name": "Fig. 2: Sorted List",
+		"description": "A sorted list of integers, implemented via immutable sequences, and a method that inserts an element into the list.",
+		"category": "VMCAI'16"
+	},
+  
+	"guarded-by-monitor-invariant": {
+		"name": "Fig. 4: Guarded-by Monitor Invariant",
+		"description": "A client of a sorted list that acquires a monitor (lock) before changing the list. The first monitor invariant requires the list to be sorted; the second is a two-state invariant and requires the changed flag to be set whenever a thread changes the content of the list between acquiring and releasing the monitor.",
+		"category": "VMCAI'16"
+	},
+  
 	"linked-list-predicates": {
-		"name": "Linked-List (Predicates)",
+		"name": "Fig. 6: Linked-List (Predicates)",
 		"description": "Inserting into an ordered linked-list which is specified via a recursively-defined predicate. The loop invariant uses a recursively-defined list segment predicate to bookkeep permissions.",
 		"category": "VMCAI'16"
 	},
 
 	"linked-list-predicates-with-wands": {
-		"name": "Linked-List (Magic Wands)",
+		"name": "Fig. 7: Linked-List (Magic Wands)",
 		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
 		"category": "VMCAI'16"
 	},
 
 	"arraylist-quantified-permissions": {
-		"name": "Array-List (Quantified Permissions)",
+		"name": "Fig. 8: Array-List (Quantified Permissions)",
 		"description": "Inserting into an array-list which is specified via quantified permissions (iterating separating conjunction).",
 		"category": "VMCAI'16"
 	},
