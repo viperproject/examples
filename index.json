@@ -74,7 +74,17 @@
     "category": "Viper Examples"
   },
   
+	"vmcai2016/sorted-list-immutable-sequence": {
+		"name": "Sorted List",
+		"description": "A sorted list of integers, implemented via immutable sequences, and a method that inserts an element into the list.",
+		"category": "Viper Examples"
+	},
   
+	"vmcai2016/guarded-by-monitor-invariant": {
+		"name": "Guarded-by Monitor Invariant",
+		"description": "A client of a sorted list that acquires a monitor (lock) before changing the list. The first monitor invariant requires the list to be sorted; the second is a two-state invariant and requires the changed flag to be set whenever a thread changes the content of the list between acquiring and releasing the monitor.",
+		"category": "Viper Examples"
+	},
   
   "vmcai2016/linked-list-predicates": {
 		"name": "Linked-List (Predicates)",
