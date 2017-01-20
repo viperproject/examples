@@ -1,60 +1,66 @@
 {
-	"../vmcai2016/arraylist-quantified-permissions": {
-		"name": "Array-List",
-		"description": "Inserting into an array-list.",
+	"./RSLFigure7": {
+		"name": "RSL Figure 7",
+		"description": "Encoding of Figure 7 Lock example from RSL paper",
 		"category": "CAV'17"
 	},
 
-  "../quickselect/arrays_quickselect_rec" : {
-    "name": "Quickselect",
-    "description": "An encoding of the Quickselect algorithm over arrays.",
-    "category": "CAV'17"
-  },
+	"./RSLFigure8": {
+		"name": "RSL Figure 8",
+		"description": "Encoding of Figure 8 message passing example from RSL paper",
+		"category": "CAV'17"
+	},
 
-  "../binary-search/binary-search-array" : {
-    "name": "Binary Search",
-    "description": "Binary search in a sorted array.",
-    "category": "CAV'17"
-  },
-
-  "../graph-copy/graph-copy" : {
-    "name": "Graph Copy",
-    "description": "Duplicating a graph.",
-    "category": "CAV'17"
-  },
-
-  "../graph-marking/graph-marking" : {
-    "name": "Graph Marking",
-    "description": "A graph marking algorithm (in the spirit of mark-and-sweep garbage collectors). Note that the example is supposed to yield 1 verification error (the encoding of a false reachability check).",
-    "category": "CAV'17"
-  },
-
-  "../longest-common-prefix/longest-common-prefix" : {
-    "name": "Longest Common Prefix",
-    "description": "Challenge from the VerifyThis Verification Competition 2012: finding the longest common prefix in an array.",
-    "category": "CAV'17"
-  },
-
-  "../max_array/max-array-elimination" : {
-    "name": "Array Max (by elimination)",
-    "description": "Finding the maximum in an array by elimination (COST IC0701 Verification Competition 2011).",
-    "category": "CAV'17"
-  },
-
-  "../max_array/max-array-standard" : {
-    "name": "Array Max (straight-forward)",
-    "description": "Finding the maximum in an array the straight-forward way.",
-    "category": "CAV'17"
-  },
-
-  "../parallel-array-replace/parallel-array-replace" : {
-    "name": "Parallel Array Replace",
-    "description": "Running example from the paper: replace each occurrence of an element in an array segment by recursing over the two half-segments in parallel.",
-    "category": "CAV'17"
-  },
-
+	"./FSLFigure2": {
+		"name": "FSL Figure 2",
+		"description": "Encoding of Figure 2 double message passing example from FSL paper",
+		"category": "CAV'17"
+	},
+	
+	"./RSLFigure2Variant": {
+		"name": "RSL Figure 2 single atomic variant",
+		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location and correspondingly more-complex invariant",
+		"category": "CAV'17"
+	},
+	
+	"./RSLFigure2VariantWithRewriting": {
+		"name": "RSL Figure 2 single atomic second variant",
+		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice",
+		"category": "CAV'17"
+	},
+	
+	"./RSLFigure2VariantWithRelAcq": {
+		"name": "RSL Figure 2 single atomic Rel/Acq variant",
+		"description": "Variant of Figure 2 example from FSL paper, using acquire reads instead of compare and swap operations",
+		"category": "CAV'17"
+	},
+	
+	"./RefCountMark1": {
+		"name": "Rust Reference Counting version 1",
+		"description": "Encoding of first variant of Rust reference counting example from FSL++ paper. Several stronger access modes allow for a proof using release/acquire",
+		"category": "CAV'17"
+	},
+	
+	"./RefCountMark2": {
+		"name": "Rust Reference Counting version 2",
+		"description": "Encoding of second variant of Rust reference counting example from FSL++ paper. A few stronger access modes allow for a proof using atomics and fences",
+		"category": "CAV'17"
+	},
+	
+	"./RefCountMarkOriginalCode": {
+		"name": "Rust Reference Counting version 3",
+		"description": "Encoding of original example from FSL++ paper, using same specs as previous example. As expected, the example doesn't verify (needs a more-sophisticated specification)",
+		"category": "CAV'17"
+	},
+	
+	"./FollyRWSpinlock": {
+		"name": "Facebook Folly Reader-Writer spinlock (code snippets)",
+		"description": "Encoding of several functions from Facebook's open-source Folly library. Two fail to verify (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
+		"category": "CAV'17"
+	},
+	
 	"CAV'17" : {
-		"description" : "This webpage contains the full examples referenced in the paper \"Automatic Verification of Iterated Separating Conjunctions using Symbolic Execution\" submitted to CAV 2016. The supplementary material for this paper (including experimental data) can be found by following <a href=\"http://viper.ethz.ch/cav16-supplementary-material.zip\">this link</a>. ",
+		"description" : "This webpage contains the full examples referenced in the paper \"Automating Deductive Verification for Weak Memory Programs\" submitted to CAV 2017.",
 		"isCategory" : true,
 		"excludedVerifiers": ["silicon", "silicon-nightly"]
 	}
