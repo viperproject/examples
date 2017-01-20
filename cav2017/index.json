@@ -54,7 +54,7 @@
 	},
 	
 	"./FollyRWSpinlock": {
-		"name": "Facebook Folly Reader-Writer spinlock (code snippets)",
+		"name": "Facebook Folly Reader-Writer spinlock code",
 		"description": "Encoding of several functions from Facebook's open-source Folly library. Two fail to verify (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
 		"category": "CAV'17"
 	},
