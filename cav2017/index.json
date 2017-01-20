@@ -17,19 +17,19 @@
 		"category": "CAV'17"
 	},
 	
-	"./RSLFigure2Variant": {
+	"./FSLFigure2Variant": {
 		"name": "RSL Figure 2 single atomic variant",
 		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location and correspondingly more-complex invariant",
 		"category": "CAV'17"
 	},
 	
-	"./RSLFigure2VariantWithRewriting": {
+	"./FSLFigure2VariantWithRewriting": {
 		"name": "RSL Figure 2 single atomic second variant",
 		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice",
 		"category": "CAV'17"
 	},
 	
-	"./RSLFigure2VariantWithRelAcq": {
+	"./FSLFigure2VariantWithRelAcq": {
 		"name": "RSL Figure 2 single atomic Rel/Acq variant",
 		"description": "Variant of Figure 2 example from FSL paper, using acquire reads instead of compare and swap operations",
 		"category": "CAV'17"
