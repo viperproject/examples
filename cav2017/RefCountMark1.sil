@@ -2,13 +2,11 @@
 
 // These definitions are specific to the example (using the invariant numbering):
 
-define min(a,b) (a < b ? a : b)
 
-define INV0TempOrMaybeUp(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(ghost).val))) && acc(temp(ghost).val, min(write - rds(v),perm(temp(ghost).val))) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(data).val))) && acc(temp(data).val, min(write - rds(v),perm(temp(data).val))))
-define INV0Temp(v) v >= 0 && acc(temp(ghost).val, write - rds(v)) && (v >= 1 ==> acc(temp(data).val, write - rds(v)))
-define INV0Up(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v))) 
-define INV0MaybeDown(v,sync) v >= 0 && acc(maybeDown(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeDown(data,!sync).val, write - rds(v)))
-define INV0True(v) v >= 0 && (v < 1 ? true : true) && true
+define INV0TempOrMaybeUp(v,sync) v >= 0 && ghostRef(ghost) && acc(maybeUp(ghost,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(ghost).val))) && acc(temp(ghost).val, min(write - rds(v),perm(temp(ghost).val))) && (v >= 1 ==> realRef(data) && acc(maybeUp(data,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(data).val))) && acc(temp(data).val, min(write - rds(v),perm(temp(data).val))))
+define INV0Temp(v) v >= 0 && ghostRef(ghost) && acc(temp(ghost).val, write - rds(v)) && (v >= 1 ==> realRef(data) && acc(temp(data).val, write - rds(v)))
+define INV0MaybeUp(v,sync) v >= 0 && ghostRef(ghost) && acc(maybeUp(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> realRef(data) && acc(maybeUp(data,!sync).val, write - rds(v))) 
+define INV0MaybeDown(v,sync) v >= 0 && ghostRef(ghost) && acc(maybeDown(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> realRef(data) && acc(maybeDown(data,!sync).val, write - rds(v)))
 
 
 
@@ -24,7 +22,7 @@ axiom some { forall i : Int :: {rds(i)} rds(0) == none && rds(i) == rd() * i && 
 axiom rdPositive { rd() > none }
 }
 
-define ARC(a, b, g) heap(a)==0 && heap(b)==0 && heap(g)==0 && is_ghost(g) && acc(a.val,rd()) && acc(g.val,rd()) && RMWAcq(b, 0) && Rel(b,0) && Init(b)
+define ARC(a, b, g) realRef(a) && realRef(b) && ghostRef(g) && acc(a.val,rd()) && acc(g.val,rd()) && RMWAcq(b, 0) && Rel(b,0) && Init(b)
 
 method new_method(v : Int) returns (data: Ref, count: Ref, ghost: Ref)
   requires true
@@ -82,20 +80,19 @@ method clone(data:Ref, count: Ref, ghost:Ref)
 
 define INV1Temp(v) true // not used for this example
 define INV1TempOrMaybeUp(v,sync) true // not used for this example
-define INV1Up(v,sync) true // not used for this example
+define INV1MaybeUp(v,sync) true // not used for this example
 define INV1MaybeDown(v,sync) true  // not used for this example
-define INV1True(v) true // not used for this example
 define INV2Temp(v) true // not used for this example
 define INV2TempOrMaybeUp(v,sync) true // not used for this example
-define INV2Up(v,sync) true // not used for this example
+define INV2MaybeUp(v,sync) true // not used for this example
 define INV2MaybeDown(v,sync) true  // not used for this example
-define INV2True(v) true // not used for this example
 
 
 
 
 
 // BACKGROUND DEFINITIONS begin here (not specific to this example)
+define min(a,b) (a < b ? a : b)
 
 method havocedInt() returns (x:Int)
 method havocedBool() returns (x:Bool)
@@ -123,13 +120,13 @@ domain parallelHeaps {
   function heap(x: Ref) : Int
   function is_ghost(x:Ref) : Bool
    
-  axiom inv_up { forall r:Ref :: {up(r)} up_inv(up(r)) == r && (is_ghost(r) ? up(r) == r : heap(up(r)) == 1) }
-  axiom inv_up_inv { forall r:Ref :: {up_inv(r)} up(up_inv(r)) == r && (is_ghost(r) ? up_inv(r) == r : heap(up_inv(r)) == 0) }
-  axiom inv_down { forall r:Ref :: {down(r)} down_inv(down(r)) == r  && (is_ghost(r) ? down(r) == r : heap(down(r)) == -1) }
-  axiom inv_down_inv { forall r:Ref :: {down_inv(r)} down(down_inv(r)) == r && (is_ghost(r) ? down_inv(r) == r : heap(down_inv(r)) == 0) }
+  axiom inv_up { forall r:Ref :: {up(r)} up_inv(up(r)) == r && (is_ghost(r) ? up(r) == r : heap(r)==0 ==> heap(up(r)) == 1) }
+  axiom inv_up_inv { forall r:Ref :: {up_inv(r)} up(up_inv(r)) == r && (is_ghost(r) ? up_inv(r) == r : heap(r)==1 ==> heap(up_inv(r)) == 0) }
+  axiom inv_down { forall r:Ref :: {down(r)} down_inv(down(r)) == r  && (is_ghost(r) ? down(r) == r : heap(r)==0 ==> heap(down(r)) == -1) }
+  axiom inv_down_inv { forall r:Ref :: {down_inv(r)} down(down_inv(r)) == r && (is_ghost(r) ? down_inv(r) == r : heap(r)==-1 ==> heap(down_inv(r)) == 0) }
    
-  axiom inv_temp { forall r:Ref :: {temp(r)} temp_inv(temp(r)) == r  && (is_ghost(r) ? temp(r) == r : heap(temp(r)) == -3) }
-  axiom inv_temp_inv { forall r:Ref :: {temp_inv(r)} temp(temp_inv(r)) == r && (is_ghost(r) ? temp_inv(r) == r : heap(temp_inv(r)) == 0) }
+  axiom inv_temp { forall r:Ref :: {temp(r)} temp_inv(temp(r)) == r  && (is_ghost(r) ? temp(r) == r : heap(r)==0 ==> heap(temp(r)) == -3) }
+  axiom inv_temp_inv { forall r:Ref :: {temp_inv(r)} temp(temp_inv(r)) == r && (is_ghost(r) ? temp_inv(r) == r : heap(r)==-3 ==> heap(temp_inv(r)) == 0) }
 } 
 
 define realRef(x) !is_ghost(x) && heap(x) == 0
@@ -185,61 +182,30 @@ define waitOnAcquireRead(x,v) {
 
 define waitOnAtomicRead(x,v,sync) {
   var tmp: Int // used as temporary variable for atomic reads
-  var bool : Bool
   var intSet : Set[Int]
-  var intSetTwo : Set[Int]
-  waitOnAtomicReadWithVars(x,v,sync,tmp,bool,intSet,intSetTwo)
+  waitOnAtomicReadWithVars(x,v,sync,tmp,intSet)
 }
 
-define waitOnAtomicReadWithVars(x,v,sync,tmpInt,tmpBool,tmpIntSet,tmpIntSetTwo) {
+define waitOnAtomicReadWithVars(x,v,sync,tmpInt,tmpIntSet) {
   atomicReadWithVar(x,tmpInt,sync,tmpIntSet)
 
   if(tmpInt == v) { 
-  
-    tmpBool := havocedBool()
-
-    assume forall i : Int :: {i in tmpIntSetTwo}{AcqConjunctTrigger(x,i)}{valsRead(x,i)} i in tmpIntSetTwo <==> (hasAcqConjunct(x,i,false))
-    label beforeLoop
-
-    while(tmpBool)
-      invariant Init(x) && SomeAcq(x) && forall i : Int :: {AcqConjunctTrigger(x,i)}{valsRead(x,i)} i in tmpIntSetTwo ==> 
-        acc(AcqConjunct(x,i)) && AcqConjunctTrigger(x,i) && valsRead(x,i) == old[beforeLoop](valsRead(x,i))
-    {
-      atomicReadWithVar(x,tmpInt,sync,tmpIntSet)
-      tmpBool := havocedBool()
-      assume (tmpInt == v)
-    } 
-
-    atomicReadWithVar(x,tmpInt,sync,tmpIntSet)
-    assume !(tmpInt == v)
+    // all *subsequent* reads of the same value v will not change anything - only the *last* read (which breaks out of the loop) makes a change to what we hold (and the invariant)
+    atomicReadWithVar(x,tmpInt,sync,tmpIntSet) // assign the *last* value read
+    assume tmpInt != v
   }
 }
 
 define waitOnCAS(x,v1,v2, readSync, writeSync) {
   var tmpInt : Int
-  var tmpBool : Bool
-  var waitOnCASTmpIntSet : Set[Int]
-  waitOnCASWithVars(x,v1,v2, readSync, writeSync, tmpInt, tmpBool, waitOnCASTmpIntSet)
+  waitOnCASWithVars(x,v1,v2, readSync, writeSync, tmpInt)
 }
 
-define waitOnCASWithVars(x,v1,v2, readSync, writeSync, tmpInt, tmpBool, tmpIntSet) 
+define waitOnCASWithVars(x,v1,v2, readSync, writeSync, tmpInt) 
  {  
-  assume forall i : Int :: {i in tmpIntSet} i in tmpIntSet ==> (hasAcqConjunct(x,i,true))
-  assume forall i : Int :: {AcqConjunctTrigger(x,i)} (hasAcqConjunct(x,i,true)) ==> i in tmpIntSet
-  tmpBool := havocedBool()
-
-  while(tmpBool)
-    invariant Init(x) && SomeRMWAcq(x) && forall i : Int :: {AcqConjunctTrigger(x,i)} i in tmpIntSet ==> AcqConjunctTrigger(x,i) && acc(AcqConjunct(x,i),wildcard) 
-  { 
-    // special case of CAS encoding - we know the read will fail
-    tmpInt := havocedInt()
-    assume tmpInt != v1 // we force the read to fail - this is not the successful (last) one
-    CASFailedRead(x,tmpInt) 
-    tmpBool := havocedBool()
-  } 
-
-  CAS(x, v1, v2, tmpInt, readSync, writeSync)
-  assume (tmpInt == v1)
+  // all failing CAS operations will not affect what we hold; they can be skipped, here!
+  CAS(x, v1, v2, tmpInt, readSync, writeSync) // model the *last* CAS, which succeeds, breaking out of the loop
+  assume tmpInt == v1 // the last CAS succeeds
 }
 
 define atomicRead(x, tmp, sync) {
@@ -252,9 +218,9 @@ define atomicReadWithVar(x, tmp, sync, tmpSet) {
   tmp := havocedInt()
   if(x.acq) { // we have the usual Acq permission
     atomicReadInhaleWithVar(x, tmp, sync, false, tmpSet) 
-  } else { // attempting atomic read with only RMWAcq permission
-    CASFailedRead(x,tmp)
-  }
+  } //else { // attempting atomic read with only RMWAcq permission
+  //  CASFailedRead(x,tmp)
+  //}
 }
 
 define relaxedRead(x, tmp) {
@@ -303,9 +269,9 @@ define CASGeneralised(x, tmp, condition, newVal, readSync, writeSync, tmpIntSet,
       atomicWriteExhaleGeneralised(x, newVal, writeSync, true)
       moveTempHeap(tmpRefSet,readSync)
     }
-  } else {
-    CASFailedRead(x,tmp)
-  }
+  } //else {
+    //CASFailedRead(x,tmp)
+  //}
 }
 
 
@@ -455,7 +421,7 @@ define moveTempHeap(refSet, readSync) {
   exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(temp(r),1), perm(AcqConjunct(temp(r),1)))
 
    refSet := havocedRefSet()
-// move all locations r to which permission to "AcqConjunct(r,1)" is held from "temp" heap to normal heap
+// move all locations r to which permission to "AcqConjunct(r,2)" is held from "temp" heap to normal heap
   assume forall r: Ref :: {r in refSet} r in refSet ==> heap(r) == 0 && !is_ghost(r) && perm(AcqConjunct(temp(r),2)) > none
   assume forall r: Ref :: {temp(r)} perm(AcqConjunct(temp(r),2)) > none && !is_ghost(r) ==> r in refSet
   inhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(maybeDown(r,!readSync),2), perm(AcqConjunct(temp(r),2)))  
@@ -540,19 +506,19 @@ define atomicWriteExhaleGeneralised(x, v, sync, useTempHeap) {
     if(useTempHeap) {
       exhale INV0TempOrMaybeUp(v,sync)
     } else {
-      exhale INV0Up(v,sync)
+      exhale INV0MaybeUp(v,sync)
     }
   } elseif(x.rel == 1) {
     if(useTempHeap) {
       exhale INV1TempOrMaybeUp(v,sync)
     } else {
-      exhale INV1Up(v,sync)
+      exhale INV1MaybeUp(v,sync)
     }
   } elseif(x.rel == 2) {
     if(useTempHeap) {
       exhale INV2TempOrMaybeUp(v,sync)
     } else {
-      exhale INV2Up(v,sync)
+      exhale INV2MaybeUp(v,sync)
     }
   } else {
     assert false // this cannot happen - no Rel invariant was held!
@@ -592,6 +558,7 @@ define atomicReadInhaleWithVar(x, v, sync, isRMW, tmpSet) {
 }
 
 define CASReadInhaleToTempHeapWithVar(x,v,tmpSet) {
+  // UNROLL per numbered invariant
   if(hasAcqConjunct(x,0,true)) {
     inhale INV0Temp(v)
   }
@@ -601,19 +568,5 @@ define CASReadInhaleToTempHeapWithVar(x,v,tmpSet) {
   if(hasAcqConjunct(x,2,true)) {
     inhale INV2Temp(v)
   }
-}
-
-
-define CASFailedRead(x,v) {
-    // UNROLL per numbered invariant
-    if(hasAcqConjunct(x,0,true)) {  
-      inhale INV0True(v)
-    } 
-    if(hasAcqConjunct(x,1,true)) {  
-      inhale INV1True(v)
-    } 
-    if(hasAcqConjunct(x,2,true)) {  
-      inhale INV2True(v)
-    } 
 }
 
