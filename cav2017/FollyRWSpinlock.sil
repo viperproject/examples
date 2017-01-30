@@ -1,71 +1,6 @@
+// PART 1: translation of code
 
-
-
-// these are only needed if compare-and-swap / fetch-update instructions are used without synchronising both read and write
-define INV0TempOrMaybeUp(v,sync) true
-define INV0Temp(v) true
-
-// These definitions are specific to the example (using the invariant numbering):
-define INV0MaybeUp(v,sync) (v < 0 ? false : ghostRef(ghost) && acc(ghost.val, leftover(v)) && realRef(bits) && acc(resource(bits), leftover(v)) && ghostRef(readsGhost) && acc(readsGhost.val, write - rds(divide(v,4))))
-define INV0MaybeDown(v,sync) (v < 0 ? false : ghostRef(ghost) && acc(ghost.val, leftover(v)) && realRef(bits) && acc(resource(bits), leftover(v)) && ghostRef(readsGhost) && acc(readsGhost.val, write - rds(divide(v,4))))
-
-
-define leftover(v) (v % 2 == 1 ? none : (secondBit(v) == 1 ? upgradeable - rds(divide(v,4)) : write - rds(divide(v,4))))
-
- 
-// example
-domain reads {
-function rd() : Perm
-
-function rds(i: Int) : Perm
-
-axiom some { forall i : Int :: {rds(i)} rds(0) == none && rds(i) == rd() * i && (i >= 0 ==> rds(i) < upgradeable) }
-axiom rdPositive { rd() > none }
-}
-
-predicate resource(lock : Ref) // represents data protected by lock
-
-// Viper does not support bit-wise operations - add them here
-function firstBit(v: Int) : Int
-{
-  v % 2 
-}
-
-function secondBit(v: Int) : Int
-{
-  divide(v % 4,2)
-} 
-
-//define divide(a,b) (b == 0 ? 0 : (a - (a % b))\b)
-//define divide(a,b) a\b
-function divide(a:Int, b:Int) : Int  // this works better than Z3's native division
-  requires b != 0 
-{ 
-  (a - (a % b))\b 
-}
-
-function setFirstBit(v: Int, b: Int) : Int
-  requires v >= 0 && (b == 0 || b == 1)  
-{
-  (v % 2 == b ? v : v + (b == 0 ? -1 : 1))
-}
-
-function setSecondBit(v: Int, b:Int) : Int
-  requires v >= 0 && (b == 0 || b == 1)
-{
-  (v % 4 == b * 2 || v % 4 == b * 2 + 1) ? v : v + (b == 0 ? -2 : 2)
-}
-
-define upgradeable (write*2)/3         // write/3 also works   
-
-define Lock(bits) realRef(bits) && Rel(bits,0) && RMWAcq(bits,0) && Init(bits)
-
-//define readResource acc(resource(bits),rd()) && acc(bits.ghost,rd()) && acc(bits.readsGhost,rd())
-//define exclusiveResource acc(resource(bits),write) && acc(bits.ghost,write)
-define readResource acc(resource(bits),rd()) && ghostRef(ghost) && acc(ghost.val,rd()) && ghostRef(readsGhost) && acc(readsGhost.val,rd())
-define exclusiveResource acc(resource(bits),write) && ghostRef(ghost) && acc(ghost.val,write)
-
-
+// we pass the real lock location and two ghost locations (ghost and readsGhost) around together, instead of encoding composite objects here.
 method try_lock(bits: Ref, ghost: Ref, readsGhost: Ref) returns (res: Bool)
   requires Lock(bits)
   ensures Lock(bits) && (res ==> exclusiveResource)
@@ -112,7 +47,7 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
       var tmpRefSet : Set[Ref]
       fetchUpdateWithVar(bits,value,value + 4,true,true,tmpIntSet,tmpRefSet)
       if(firstBit(value) == 1 || secondBit(value) == 1) {
-        fetchUpdateWithVar(bits,value,value - 4, true,true,tmpIntSet,tmpRefSet) // cannot prove that we are not giving up a read permission...
+        fetchUpdateWithVar(bits,value,value - 4, true,true,tmpIntSet,tmpRefSet) // FAILS - we cannot prove that we are not giving up a read permission...
         res := false
         goto return // return false
       } 
@@ -170,9 +105,9 @@ method unlock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
   
 method unlock_and_lock_shared_original(bits:Ref, ghost:Ref, readsGhost:Ref)
   requires Lock(bits) && exclusiveResource
-  ensures Lock(bits) && readResource // cannot capture cumulative effect of updates - why do we still have a read permission, here?
+  ensures Lock(bits) && readResource // FAILS - cannot capture cumulative effect of updates - why do we still have a read permission, here?
   {
-    var tmpValue : Int
+    var tmpValue : Int 
     fetchUpdate(bits,tmpValue,tmpValue + 4,true,true)
     unlock(bits, ghost, readsGhost) 
   }
@@ -194,7 +129,85 @@ method unlock_and_lock_shared(bits:Ref, ghost:Ref, readsGhost:Ref)
 
 
 
+// PART 2: invariant definitions + example-specific background definitions
 
+define INV0MaybeUp(v,sync) (v < 0 ? false : ghostRef(ghost) && acc(maybeUp(ghost,!sync).val, leftover(v)) && realRef(bits) && acc(resource(maybeUp(bits,!sync)), leftover(v)) && ghostRef(readsGhost) && acc(maybeUp(readsGhost,!sync).val, write - rds(divide(v,4))))
+define INV0MaybeDown(v,sync) (v < 0 ? false : ghostRef(ghost) && acc(maybeDown(ghost,!sync).val, leftover(v)) && realRef(bits) && acc(resource(maybeDown(bits,!sync)), leftover(v)) && ghostRef(readsGhost) && acc(maybeDown(readsGhost,!sync).val, write - rds(divide(v,4))))
+define INV0TempOrMaybeUp(v,sync) (v < 0 ? false : ghostRef(ghost) 
+  && acc(maybeUp(ghost,!sync).val, leftover(v) - min(leftover(v),perm(temp(ghost).val))) && acc(temp(ghost).val, min(leftover(v),perm(temp(ghost).val)))
+  && realRef(bits) 
+  && acc(resource(maybeUp(bits,!sync)), leftover(v) - min(leftover(v),perm(resource(temp(bits))))) && acc(resource(temp(bits)), min(leftover(v),perm(resource(temp(bits))))) 
+  && ghostRef(readsGhost) 
+&& acc(maybeUp(readsGhost,!sync).val, write - rds(divide(v,4)) - min(write - rds(divide(v,4)), perm(temp(readsGhost).val))))
+&& acc(temp(readsGhost).val, min(write - rds(divide(v,4)), perm(temp(readsGhost).val)))
+
+define INV0Temp(v) (v < 0 ? false : ghostRef(ghost) && acc(temp(ghost).val, leftover(v)) && realRef(bits) && acc(resource(temp(bits)), leftover(v)) && ghostRef(readsGhost) && acc(temp(readsGhost).val, write - rds(divide(v,4))))
+
+// permissions conceptually "left" in the atomic location's invariant
+define leftover(v) (v % 2 == 1 ? none : (secondBit(v) == 1 ? upgradeable - rds(divide(v,4)) : write - rds(divide(v,4))))
+
+ 
+// counting permissions
+domain reads {
+function rd() : Perm
+
+function rds(i: Int) : Perm
+
+// Note: this axiom allows constraining a "rd" amount to be arbitrarily small, depending on the terms used to instantiate the axiom. 
+// (terms of the form rds(i) will cause an instantiation). The axiom in the current form depends on this triggering for soundness.
+// In particular, instantiating the axiom with an expression in terms of rd() itself (such as 1/ rd + 1) would lead to unsoundness. However,
+// we only instantiate the axiom with integer values from the program, which are never expressed in terms of "rd".
+// An alternative formulation which would not depend on triggering for soundness, would be to make the notion of a machine integer value
+// an explicit concept in the axiomatisation, and to guard the axiom body with the condition that i is such an integer; this could be done routinely,
+// but the extra clutter involved would be better generated by a front-end, rather than encoded by hand, as for these examples.
+axiom some { forall i : Int :: {rds(i)} rds(0) == none && rds(i) == rd() * i && (i >= 0 ==> rds(i) < upgradeable) }
+axiom rdPositive { rd() > none }
+}
+
+predicate resource(lock : Ref) // represents data protected by lock
+
+// Viper does not support bit-wise operations - add them here
+function divide(a:Int, b:Int) : Int  // this works better than Z3's native division, when dealing with non-linear arithmetic
+  requires b != 0 
+{ 
+  (a - (a % b))\b 
+}
+
+function firstBit(v: Int) : Int
+{
+  v % 2 
+}
+
+function secondBit(v: Int) : Int
+{
+  divide(v % 4,2)
+} 
+
+function setFirstBit(v: Int, b: Int) : Int // set first bit of v to b
+  requires v >= 0 && (b == 0 || b == 1)  
+{
+  (v % 2 == b ? v : v + (b == 0 ? -1 : 1))
+}
+
+function setSecondBit(v: Int, b:Int) : Int // set second bit of v to b
+  requires v >= 0 && (b == 0 || b == 1)
+{
+  (v % 4 == b * 2 || v % 4 == b * 2 + 1) ? v : v + (b == 0 ? -2 : 2)
+}
+
+
+// Define lock concepts: what it means to know a reference is a "Lock", when exclusive, upgradeable and read access to the lock are represented by 
+
+define Lock(bits) realRef(bits) && Rel(bits,0) && RMWAcq(bits,0) && Init(bits)
+
+// "write" is a full permission
+define upgradeable (write*2)/3  // amount of permission representing an upgradeable lock - note: other values e.g. write/3 also work  
+
+// read permission to each of: the resource guarded by the lock, and the two ghost locations
+define readResource acc(resource(bits),rd()) && ghostRef(ghost) && acc(ghost.val,rd()) && ghostRef(readsGhost) && acc(readsGhost.val,rd())
+
+// full permission to the resource, and the "ghost" ghost reference.
+define exclusiveResource acc(resource(bits),write) && ghostRef(ghost) && acc(ghost.val,write)
 
 
 define INV1Temp(v) true // not used for this example
@@ -210,7 +223,7 @@ define INV2True(v) true // not used for this example
 
 
 
-// BACKGROUND DEFINITIONS begin here (not specific to this example)
+// Part 3: standard background definitions (common for all examples)
 define min(a,b) (a < b ? a : b)
 
 method havocedInt() returns (x:Int)
@@ -337,9 +350,7 @@ define atomicReadWithVar(x, tmp, sync, tmpSet) {
   tmp := havocedInt()
   if(x.acq) { // we have the usual Acq permission
     atomicReadInhaleWithVar(x, tmp, sync, false, tmpSet) 
-  } //else { // attempting atomic read with only RMWAcq permission
-  //  CASFailedRead(x,tmp)
-  //}
+  }
 }
 
 define relaxedRead(x, tmp) {
@@ -388,9 +399,7 @@ define CASGeneralised(x, tmp, condition, newVal, readSync, writeSync, tmpIntSet,
       atomicWriteExhaleGeneralised(x, newVal, writeSync, true)
       moveTempHeap(tmpRefSet,readSync)
     }
-  } //else {
-    //CASFailedRead(x,tmp)
-  //}
+  }
 }
 
 
@@ -480,11 +489,18 @@ define FENCEAcqWithVars(refSet) {
   exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(down(r),1), perm(AcqConjunct(down(r),1)))
 
    refSet := havocedRefSet()
-// move all locations r to which permission to "AcqConjunct(r,1)" is held from "down" heap to normal heap
+// move all locations r to which permission to "AcqConjunct(r,2)" is held from "down" heap to normal heap
   assume forall r: Ref :: {r in refSet} r in refSet ==> heap(r) == 0 && !is_ghost(r) && perm(AcqConjunct(down(r),2)) > none
   assume forall r: Ref :: {down(r)} perm(AcqConjunct(down(r),2)) > none && !is_ghost(r) ==> r in refSet
   inhale forall r: Ref :: {r in refSet} {down(r)} r in refSet ==> acc(AcqConjunct(r,2), perm(AcqConjunct(down(r),2)))  
   exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(down(r),2), perm(AcqConjunct(down(r),2)))
+
+   refSet := havocedRefSet()
+// move all locations r to which permission to "AcqConjunct(r,1)" is held from "down" heap to normal heap
+  assume forall r: Ref :: {r in refSet} r in refSet ==> heap(r) == 0 && !is_ghost(r) && perm(resource(down(r))) > none
+  assume forall r: Ref :: {down(r)} perm(resource(down(r))) > none && !is_ghost(r) ==> r in refSet
+  inhale forall r: Ref :: {r in refSet} {down(r)} r in refSet ==> acc(resource(r), perm(resource(down(r))))  
+  exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(resource(down(r)), perm(resource(down(r))))
 
 }  
 
@@ -546,6 +562,14 @@ define moveTempHeap(refSet, readSync) {
   inhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(maybeDown(r,!readSync),2), perm(AcqConjunct(temp(r),2)))  
   exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(AcqConjunct(temp(r),2), perm(AcqConjunct(temp(r),2)))
 
+   refSet := havocedRefSet()
+// move all locations r to which permission to "resource(r)" is held from "temp" heap to normal heap
+  assume forall r: Ref :: {r in refSet} r in refSet ==> heap(r) == 0 && !is_ghost(r) && perm(resource(temp(r))) > none
+  assume forall r: Ref :: {temp(r)} perm(resource(temp(r))) > none && !is_ghost(r) ==> r in refSet
+  inhale forall r: Ref :: {r in refSet} {temp(r)} r in refSet ==> acc(resource(r), perm(resource(temp(r))))  
+  exhale forall r: Ref :: {r in refSet} r in refSet ==> acc(resource(temp(r)), perm(resource(temp(r))))
+ 
+
 }  
 
 
@@ -558,10 +582,7 @@ define rewriteAcqConjunctsWithVar(x,isRMW,oldAcqSet,newAcqSet,tmpBool,tmpInt)
     exhale forall r: Ref :: r != null ==> acc(r.init, perm(r.init))
     exhale forall r: Ref :: r != null ==> acc(r.val, perm(r.val))
     exhale forall r: Ref :: r != null ==> acc(r.rel, perm(r.rel))
-    exhale forall r: Ref :: r != null ==> acc(r.acq, perm(r.acq))
-    //exhale forall r: Ref :: r != null ==> acc(AcqConjunct(r,0), (perm(AcqConjunct(r,0)) > none ? perm(AcqConjunct(r,0)) : none))
-    //exhale forall r: Ref :: r != null ==> acc(AcqConjunct(r,1), perm(AcqConjunct(r,1)))
-    //exhale forall r: Ref :: r != null ==> acc(AcqConjunct(r,2), perm(AcqConjunct(r,2)))   
+    exhale forall r: Ref :: r != null ==> acc(r.acq, perm(r.acq)) 
     tmpInt := havocedInt()
     // UNROLL per numbered invariant
     if(0 in oldAcqSet) {

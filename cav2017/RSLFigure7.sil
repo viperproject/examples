@@ -1,19 +1,4 @@
-
-
-
-// These definitions are specific to the example (using the invariant numbering):
-define INV0MaybeUp(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeUp(z,!sync)) : false)
-define INV0MaybeDown(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeDown(z,!sync)) : false)
-define INV0TempOrMaybeUp(v,sync)   (v == 0 ? true : v == 1 ? realRef(z) && acc(J(maybeUp(z,!sync)),write - min(write,perm(J(temp(z))))) && acc(J(temp(z)),min(write,perm(J(temp(z))))) : false) 
-define INV0Temp(v) (v == 0 ? true : v == 1 ? realRef(z) && J(temp(z)) : false)
-
-
-
-
-// example specifics 
-predicate J(z:Ref)
-
-define Lock(x) realRef(x) && Rel(x,0) && RMWAcq(x,0) && Init(x)
+// PART 1: translation of code
 
 method new_lock(z:Ref) returns (x: Ref)
   requires realRef(z) && J(z)
@@ -66,6 +51,20 @@ method lock_explicit(x: Ref, z:Ref)
 
 
 
+
+
+// PART 2: invariant definitions + example-specific background definitions
+
+define INV0MaybeUp(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeUp(z,!sync)) : false)
+define INV0MaybeDown(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeDown(z,!sync)) : false)
+define INV0TempOrMaybeUp(v,sync)   (v == 0 ? true : v == 1 ? realRef(z) && acc(J(maybeUp(z,!sync)),write - min(write,perm(J(temp(z))))) && acc(J(temp(z)),min(write,perm(J(temp(z))))) : false) 
+define INV0Temp(v) (v == 0 ? true : v == 1 ? realRef(z) && J(temp(z)) : false)
+
+// example specifics 
+predicate J(z:Ref) // placeholder for arbitrary assertion
+
+define Lock(x) realRef(x) && Rel(x,0) && RMWAcq(x,0) && Init(x)
+
 define INV1Temp(v) true // not used for this example
 define INV1TempOrMaybeUp(v,sync) true // not used for this example
 define INV1MaybeUp(v,sync) true // not used for this example
@@ -79,7 +78,7 @@ define INV2MaybeDown(v,sync) true  // not used for this example
 
 
 
-// BACKGROUND DEFINITIONS begin here (not specific to this example)
+// Part 3: standard background definitions (common for all examples)
 define min(a,b) (a < b ? a : b)
 
 method havocedInt() returns (x:Int)
