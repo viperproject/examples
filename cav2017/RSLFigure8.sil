@@ -1,11 +1,4 @@
-
-// these are only needed if compare-and-swap / fetch-update instructions are used without synchronising both read and write
-define INV0TempOrMaybeUp(v,sync) true
-define INV0Temp(v) true
-
-// These definitions are specific to the example (using the invariant numbering):
-define INV0MaybeUp(v,sync) (v == 0 ? true : realRef(a) && PointsTo(maybeUp(a,!sync),7))
-define INV0MaybeDown(v,sync) (v == 0 ? true : realRef(a) && PointsTo(maybeDown(a,!sync),7))
+// PART 1: translation of code
 
 
 
@@ -61,6 +54,15 @@ method thread2(a:Ref, c:Ref)
 
 
 
+// PART 2: invariant definitions + example-specific background definitions
+define INV0MaybeUp(v,sync) (v == 0 ? true : realRef(a) && PointsTo(maybeUp(a,!sync),7))
+define INV0MaybeDown(v,sync) (v == 0 ? true : realRef(a) && PointsTo(maybeDown(a,!sync),7))
+
+// these are only needed if compare-and-swap / fetch-update instructions are used without synchronising both read and write (not for this example)
+define INV0TempOrMaybeUp(v,sync) true
+define INV0Temp(v) true
+
+
 define INV1Temp(v) true // not used for this example
 define INV1TempOrMaybeUp(v,sync) true // not used for this example
 define INV1MaybeUp(v,sync) true // not used for this example
@@ -72,7 +74,7 @@ define INV2MaybeDown(v,sync) true  // not used for this example
 
 
 
-// BACKGROUND DEFINITIONS begin here (not specific to this example)
+// Part 3: standard background definitions (common for all examples)
 define min(a,b) (a < b ? a : b)
 
 method havocedInt() returns (x:Int)

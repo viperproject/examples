@@ -1,27 +1,6 @@
+// PART 1: translation of code
 
 
-
-// These definitions are specific to the example (using the invariant numbering):
-define min(a,b) (a < b ? a : b)
-
-define INV0MaybeUp(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v))) 
-define INV0TempOrMaybeUp(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(ghost).val))) && acc(temp(ghost).val, min(write - rds(v),perm(temp(ghost).val))) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(data).val))) && acc(temp(data).val, min(write - rds(v),perm(temp(data).val))))
-define INV0MaybeDown(v,sync) v >= 0 && acc(maybeDown(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeDown(data,!sync).val, write - rds(v)))
-define INV0Temp(v) v >= 0 && acc(temp(ghost).val, write - rds(v)) && (v >= 1 ==> acc(temp(data).val, write - rds(v)))
-
-
-
-// example
-domain reads {
-function rd() : Perm
-
-function rds(i: Int) : Perm
-
-axiom some { forall i : Int :: {rds(i)} rds(0) == none && rds(i) == rd() * i && (i >= 0 ==> rds(i) < write) }
-axiom rdPositive { rd() > none }
-}
-
-define ARC(a, b, g) heap(a)==0 && heap(b)==0 && heap(g)==0 && is_ghost(g) && acc(a.val,rd()) && acc(g.val,rd()) && RMWAcq(b, 0) && Rel(b,0) && Init(b)
 
 method new_method(v : Int) returns (data: Ref, count: Ref, ghost: Ref)
   requires true
@@ -76,6 +55,28 @@ method clone(data:Ref, count: Ref, ghost:Ref)
 
 
 
+// PART 2: invariant definitions + example-specific background definitions
+define min(a,b) (a < b ? a : b)
+
+define INV0MaybeUp(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v))) 
+define INV0TempOrMaybeUp(v,sync) v >= 0 && acc(maybeUp(ghost,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(ghost).val))) && acc(temp(ghost).val, min(write - rds(v),perm(temp(ghost).val))) && (v >= 1 ==> acc(maybeUp(data,!sync).val, write - rds(v) - min(write - rds(v),perm(temp(data).val))) && acc(temp(data).val, min(write - rds(v),perm(temp(data).val))))
+define INV0MaybeDown(v,sync) v >= 0 && acc(maybeDown(ghost,!sync).val, write - rds(v)) && (v >= 1 ==> acc(maybeDown(data,!sync).val, write - rds(v)))
+define INV0Temp(v) v >= 0 && acc(temp(ghost).val, write - rds(v)) && (v >= 1 ==> acc(temp(data).val, write - rds(v)))
+
+
+
+// counting permissions
+domain reads {
+function rd() : Perm
+
+function rds(i: Int) : Perm
+
+axiom some { forall i : Int :: {rds(i)} rds(0) == none && rds(i) == rd() * i && (i >= 0 ==> rds(i) < write) }
+axiom rdPositive { rd() > none }
+}
+
+define ARC(a, b, g) heap(a)==0 && heap(b)==0 && heap(g)==0 && is_ghost(g) && acc(a.val,rd()) && acc(g.val,rd()) && RMWAcq(b, 0) && Rel(b,0) && Init(b)
+
 define INV1Temp(v) true // not used for this example
 define INV1TempOrMaybeUp(v,sync) true // not used for this example
 define INV1MaybeUp(v,sync) true // not used for this example
@@ -87,7 +88,7 @@ define INV2MaybeDown(v,sync) true  // not used for this example
 
 
 
-// BACKGROUND DEFINITIONS begin here (not specific to this example)
+// Part 3: standard background definitions (common for all examples)
 define min(a,b) (a < b ? a : b)
 
 method havocedInt() returns (x:Int)
