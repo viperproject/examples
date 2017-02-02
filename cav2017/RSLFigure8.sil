@@ -1,8 +1,10 @@
+// This example is the hand-encoded version of Figure 8 from the original RSL paper 
+// "Relaxed separation logic: a program logic for C11 concurrency", by Vafeiadis and Narayan
+// The source code for this example is shown in the appendix of our submission (Fig. 13)
+
 // PART 1: translation of code
 
-
-
-
+// The outer scope of the example, which forks and joins the other threads (forking the threads is modelled by exhaling their preconditions; joining by inhaling their postconditions. The order of forking/joining the three threads is not significant, and can be changed)
 method outerscope()
 {
   var a: Ref
@@ -21,12 +23,23 @@ method outerscope()
   inhale Rel(c,0)
   inhale PointsTo(a,8)
 
-  assert PointsTo(a,8) // overall postcondition
+  exhale PointsTo(a,8) // overall postcondition
+  exhale forperm[val] y :: false // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
+  // Note that this check is made after other postconditions are exhaled.
 }
 
+// left-hand forked thread
 method thread1(a:Ref, c:Ref)
   requires Uninit(a) && Rel(c,0) // block precondition
   ensures Rel(c,0) // block postcondition
+  ensures [true, forperm[val] y :: false] // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* permissions are held.
+  // Note that this check is made after other postconditions are exhaled.
+  // The construct [A1,A2] tells the verifier to use the first (here, "true") assertion when inhaling, and the second when exhaling.
+  // This avoids the *assumption* that no such permissions are held from being made when *calling* this method.
 {  
   // non-atomic write
   a.val := 7
@@ -35,9 +48,11 @@ method thread1(a:Ref, c:Ref)
   atomicWrite(c,1,true) // release write
 }
 
+// right-hand forked thread
 method thread2(a:Ref, c:Ref)
   requires Acq(c,0) && Init(c) // block precondition
   ensures PointsTo(a,8) // block postcondition  
+  ensures [true, forperm[val] y :: false] // check for permission leaks
 {
   waitOnAcquireRead(c,0) 
 

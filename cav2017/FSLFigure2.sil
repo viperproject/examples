@@ -1,3 +1,7 @@
+// This example is the hand-encoded version of Figure 2 from the original FSL paper 
+// "A program logic for C11 memory fences", by Doko and Vafeiadis.
+// The source code for this example is shown in the appendix of our submission (Fig. 14)
+
 // PART 1: translation of code
 
 
@@ -40,7 +44,10 @@ method outerScope()
   // join thread 2
   inhale PointsTo(b,8)
   
-  exhale PointsTo(a,43) && PointsTo(b,8)
+  exhale PointsTo(a,43) && PointsTo(b,8) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
 }
 
 
@@ -65,6 +72,7 @@ method thread0(a:Ref, b:Ref, x: Ref, y: Ref)
   a.init := true
 
   exhale PointsTo(a,43) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 }
 
 method thread1(a:Ref, b:Ref, x:Ref, y:Ref)
@@ -90,7 +98,8 @@ method thread1(a:Ref, b:Ref, x:Ref, y:Ref)
 
   relaxedWrite(y, 1)
   
-  exhale Init(x) && Init(y)  
+  exhale Init(x) && Init(y) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 }
 
 
@@ -115,6 +124,7 @@ method thread2(a:Ref, b:Ref, x: Ref, y: Ref)
   b.init := true 
   
   exhale PointsTo(b,8) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 } 
 
 

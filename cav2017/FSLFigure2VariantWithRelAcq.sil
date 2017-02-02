@@ -1,3 +1,9 @@
+// This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
+// "A program logic for C11 memory fences", by Doko and Vafeiadis.
+// In this variant, we make use of a single atomic location to signal both threads, instead of one for each ownership transfer.
+// This requires the "splitting" of acquire predicates, achieved automatically in our encoding.
+// We also use release writes and acquire reads, in place of relaxed writes + release fences and relaxed reads + acquire fences.
+
 // PART 1: translation of code
 
 
@@ -35,7 +41,10 @@ method outerScope()
   // join right thread
   inhale PointsTo(b,8)
   
-  exhale PointsTo(a,43) && PointsTo(b,8)
+  exhale PointsTo(a,43) && PointsTo(b,8) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
 }
 
 
@@ -59,12 +68,13 @@ method thread0(a:Ref, b:Ref, l: Ref)
   a.init := true
 
   exhale PointsTo(a,43) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks
 }
 
 method thread1(a:Ref, b:Ref, l:Ref)
 {
   inhale realRef(a) && realRef(b) && realRef(l) // type information
-  inhale Uninit(a) && Uninit(b) && Rel(l, 0) // precondition
+  inhale Uninit(a) && Uninit(b) && Rel(l, 2) // precondition
 
   // non-atomic write
   assert acc(a.init)
@@ -83,15 +93,16 @@ method thread1(a:Ref, b:Ref, l:Ref)
   // [x]rlx := 1
   relaxedWrite(l, 1)
   
-  exhale Init(l)
+  exhale Init(l) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks
 }
 
 
 method thread2(a:Ref, b:Ref, l: Ref)
-  requires realRef(a) && realRef(b) && realRef(l) // type information
-  requires Acq(l,1) && Init(l) // precondition
-  ensures  PointsTo(b,8) // postcondition
 {
+  inhale realRef(a) && realRef(b) && realRef(l) // type information
+  inhale Acq(l,1) && Init(l) // precondition
+
   var v : Int // for temporary values of expressions
 
   // while ([l]acq == 0);
@@ -106,6 +117,9 @@ method thread2(a:Ref, b:Ref, l: Ref)
   b.val := v + 1
   b.init := true 
   
+  
+  exhale PointsTo(b,8) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks
 } 
 
 
