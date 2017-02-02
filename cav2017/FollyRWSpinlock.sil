@@ -1,24 +1,28 @@
+// This example includes methods taken from the RWSpinlock implementation in the Facebook Folly library.
+// Two methods fail to verify; we believe these to require reasoning which is beyond the scope of the underlying logics, though
+// perhaps with rich ghost state (as introduced in FSL++) a different specification can be written.
+// The source code for the example can be found at https://github.com/facebook/folly/blob/master/folly/RWSpinLock.h
+
 // PART 1: translation of code
 
 // we pass the real lock location and two ghost locations (ghost and readsGhost) around together, instead of encoding composite objects here.
 method try_lock(bits: Ref, ghost: Ref, readsGhost: Ref) returns (res: Bool)
   requires Lock(bits)
-  ensures Lock(bits) && (res ==> exclusiveResource)
-  {
-    var CASresult : Int
-    CAS(bits,0,1,CASresult,true,true)
-    
-    res := CASresult == 0
-  }
+  ensures Lock(bits) && (res ==> exclusiveResource)  
+{
+  var valRead : Int
+  CAS(bits,0,1,valRead,true,true)
+  res := (valRead == 0)
+}
 
 method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
   requires Lock(bits)
   ensures Lock(bits) && exclusiveResource
   {
     var count : Int := 0;
-    var outcome : Bool;
-    
-    outcome := try_lock(bits, ghost, readsGhost);
+    var outcome : Bool
+
+    outcome := try_lock(bits, ghost, readsGhost); 
     while(!outcome)  
       invariant Lock(bits) && (outcome ==> exclusiveResource)
     {
@@ -32,7 +36,7 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
 
   method unlock(bits: Ref, ghost: Ref, readsGhost: Ref) 
     requires Lock(bits) && exclusiveResource
-    ensures Lock(bits)
+    ensures Lock(bits)  
     { 
       var tmpInt : Int
       fetchUpdate(bits,tmpInt,setFirstBit(setSecondBit(tmpInt,0),0),false, true)
@@ -40,7 +44,7 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
 
   method try_lock_shared_original(bits: Ref, ghost: Ref, readsGhost: Ref) returns (res: Bool)
     requires Lock(bits)
-    ensures Lock(bits) && (res ==> acc(resource(bits),rd()))
+    ensures Lock(bits) && (res ==> acc(resource(bits),rd()))  
     {
       var value : Int
       var tmpIntSet : Set[Int]
@@ -54,6 +58,7 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
       res := true
       label return
     }
+
 
  // Note: this code is not the original, but is an alternative implementation which avoids incrementing the integer unless there are only readers. This makes the reasoning
  // something that can be captured by RSL invariants, but is a less efficient implementation (both due to interference from other readers, and due to a CAS rather than fetchUpdate)
@@ -114,7 +119,7 @@ method unlock_and_lock_shared_original(bits:Ref, ghost:Ref, readsGhost:Ref)
 
 method unlock_and_lock_shared(bits:Ref, ghost:Ref, readsGhost:Ref)
   requires Lock(bits) && exclusiveResource
-  ensures Lock(bits) && readResource
+  ensures Lock(bits) && readResource    
   {         
     var tmpValue : Int
     var tmpIntSet : Set[Int] 
@@ -123,7 +128,6 @@ method unlock_and_lock_shared(bits:Ref, ghost:Ref, readsGhost:Ref)
     fetchUpdateWithVar(bits,tmpValue,tmpValue + 3,true,true,tmpIntSet,tmpRefSet)
     //assert tmpValue % 2 == 1 // NOTE: this is an optimisation of the original code! We can prove from the invariant that we must be downgrading the exclusive lock
   } 
-
 
 
 
@@ -204,10 +208,10 @@ define Lock(bits) realRef(bits) && Rel(bits,0) && RMWAcq(bits,0) && Init(bits)
 define upgradeable (write*2)/3  // amount of permission representing an upgradeable lock - note: other values e.g. write/3 also work  
 
 // read permission to each of: the resource guarded by the lock, and the two ghost locations
-define readResource acc(resource(bits),rd()) && ghostRef(ghost) && acc(ghost.val,rd()) && ghostRef(readsGhost) && acc(readsGhost.val,rd())
+define readResource realRef(bits) && acc(resource(bits),rd()) && ghostRef(ghost) && acc(ghost.val,rd()) && ghostRef(readsGhost) && acc(readsGhost.val,rd())
 
 // full permission to the resource, and the "ghost" ghost reference.
-define exclusiveResource acc(resource(bits),write) && ghostRef(ghost) && acc(ghost.val,write)
+define exclusiveResource realRef(bits) && acc(resource(bits),write) && ghostRef(ghost) && acc(ghost.val,write)
 
 
 define INV1Temp(v) true // not used for this example

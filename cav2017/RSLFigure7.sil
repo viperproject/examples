@@ -1,9 +1,18 @@
+// This example is the hand-encoded version of Figure 7 from the original RSL paper 
+// "Relaxed separation logic: a program logic for C11 concurrency", by Vafeiadis and Narayan
+// The source code for this example is shown in the appendix of our submission (Fig. 12)
+
 // PART 1: translation of code
 
 method new_lock(z:Ref) returns (x: Ref)
   requires realRef(z) && J(z)
   ensures Lock(x) 
-  ensures [true, forperm[val] y :: false] // check for leaks
+  ensures [true, forperm[val] y :: false] // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
+  // Note that this check is made after other postconditions are exhaled.
+  // The construct [A1,A2] tells the verifier to use the first (here, "true") assertion when inhaling, and the second when exhaling.
+  // This avoids the *assumption* that no such permissions are held from being made when *calling* this method.
 {
   allocAtomic(x,0,true)
   atomicWrite(x,1,true)
@@ -12,7 +21,7 @@ method new_lock(z:Ref) returns (x: Ref)
 method unlock(x: Ref, z:Ref)
   requires Lock(x) && realRef(z) && J(z)
   ensures Lock(x) 
-  ensures [true, forperm[val] y :: false] // check for leaks
+  ensures [true, forperm[val] y :: false] // check for permission leaks
 {
   atomicWrite(x,1,true)
 }
@@ -20,7 +29,7 @@ method unlock(x: Ref, z:Ref)
 method lock(x: Ref, z:Ref)
   requires realRef(z) && Lock(x)
   ensures realRef(z) && J(z) && Lock(x)
-  ensures [true, forperm[val] y :: false] // check for leaks
+  ensures [true, forperm[val] y :: false] // check for permission leaks
 {  
   waitOnCAS(x, 1, 0, true, false) 
 }

@@ -1,10 +1,22 @@
+// This is a version of the main example from "Tackling Real-Life Relaxed Concurrency with FSL++", Doko and Vafeiadis
+// The example is based on the "ARC" reference counting library for Rust.
+// In this version, we leave the code unchanged, but keep the (relatively simple) specification using counting permissions
+// as used in the file RefCountMark2.sil (which itself corresponds to the source code in Fig. 16 of the appendix to our submission)
+
+
 // PART 1: translation of code
 
 
 
 method new_method(v : Int) returns (data: Ref, count: Ref, ghost: Ref)
   requires true
-  ensures ARC(data,count,ghost) && data.val == v && [true, perm(data.val)==none] // check for leaks
+  ensures ARC(data,count,ghost) && data.val == v
+  ensures [true, forperm[val] y :: false] // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
+  // Note that this check is made after other postconditions are exhaled.
+  // The construct [A1,A2] tells the verifier to use the first (here, "true") assertion when inhaling, and the second when exhaling.
+  // This avoids the *assumption* that no such permissions are held from being made when *calling* this method.
 {
   allocNonAtomic(data)
   allocNonAtomic(ghost)
@@ -22,7 +34,8 @@ method new_method(v : Int) returns (data: Ref, count: Ref, ghost: Ref)
 
 method read(data:Ref, count:Ref, ghost:Ref) returns (v: Int) 
   requires ARC(data,count,ghost)
-  ensures ARC(data,count,ghost) && data.val == v && [true, perm(data.val)==none] // check for leaks
+  ensures ARC(data,count,ghost) && data.val == v
+  ensures [true, forperm[val] y :: false] // check for permission leaks
 {
   // non-atomic read
   v := data.val
@@ -30,7 +43,8 @@ method read(data:Ref, count:Ref, ghost:Ref) returns (v: Int)
 
 method drop(data:Ref, count: Ref, ghost:Ref)
   requires ARC(data,count,ghost) 
-  ensures true && [true, perm(data.val)==none] // check for leaks
+  ensures true
+  ensures [true, forperm[val] y :: false] // check for permission leaks
 {
   var t : Int
 
@@ -38,14 +52,15 @@ method drop(data:Ref, count: Ref, ghost:Ref)
 
   if(t == 1) {  
     FENCEAcq
-    // deallocate data
+    // deallocate data - modelled as giving up the (full) permission to the location
     exhale acc(data.val)
   }
 }
 
 method clone(data:Ref, count: Ref, ghost:Ref)
   requires ARC(data,count,ghost)
-  ensures ARC(data,count,ghost) && ARC(data,count,ghost) && [true, perm(data.val)==none] // FAILS as expected - the specification is too weak to explain why this should work for a relaxed fetch/update
+  ensures ARC(data,count,ghost) && ARC(data,count,ghost) // FAILS as expected - the specification is too weak to explain why this should work for a relaxed fetch/update
+  ensures [true, forperm[val] y :: false] // check for permission leaks
   {
     var t: Int
     fetchUpdate(count, t, t+1, false, false)

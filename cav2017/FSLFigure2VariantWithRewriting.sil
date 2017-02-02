@@ -1,3 +1,16 @@
+// This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
+// "A program logic for C11 memory fences", by Doko and Vafeiadis.
+// In this variant, we make use of a single atomic location to signal both threads, instead of one for each ownership transfer.
+// This requires the "splitting" of acquire predicates, achieved automatically in our encoding.
+// We make the example more interesting by assuming that the original invariant cannot be syntactically split into the two required.
+// Essentially, inv(0) = (v!=0 ==> A1),  inv(1) = (v!=0 ==> A2), and inv(2) = (v!=0 ==> A1*A2), where A1 and A2 represent the ownership
+// required by the other two threads.
+// In order to split inv(2) into the two invariants required, we employ a manual rewriting step, as described in appendix C 
+// The manual step (here represented by the rewriteAcqConjuncts(x,false,Set(2),Set(0,1)) macro invocation) checks that 
+// inv(2) entails inv(0)*inv(1), exhales the former AcqConjuncts and inhales the latter (the "false" parameter is used to indicate that we 
+// are handling Acq conjuncts and not those for RMWAcq)
+
+
 // PART 1: translation of code
 
 
@@ -17,9 +30,9 @@ method outerScope()
   // [x]rlx := 0
   relaxedWrite(x, 0)
   
-  rewriteAcqConjuncts(x,false,Set(2),Set(0,1))
+  rewriteAcqConjuncts(x,false,Set(2),Set(0,1)) // inv(2) entails inv(0)*inv(1)
 
-//  rewriteAcqConjunctsWithVar(x,false,Set(1),Set(2),tmpBool,tmpInt) // fails, correctly
+//  rewriteAcqConjunctsWithVar(x,false,Set(1),Set(2),tmpBool,tmpInt) // fails, correctly - inv(1) does not entail inv(2)
 
   // fork thread 0 
   exhale Acq(x, 0) && Init(x)
@@ -42,6 +55,9 @@ method outerScope()
   inhale PointsTo(b,8)
   
   exhale PointsTo(a,43) && PointsTo(b,8)
+  exhale forperm[val] y :: false // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
 }
 
 
@@ -67,6 +83,8 @@ method thread0(a:Ref, b:Ref, x: Ref)
   a.init := true
 
   exhale PointsTo(a,43) // postcondition
+  
+  exhale forperm[val] y :: false // check for permission leaks
 }
 
 method thread1(a:Ref, b:Ref, x:Ref)
@@ -91,7 +109,8 @@ method thread1(a:Ref, b:Ref, x:Ref)
   // [x]rlx := 1
   relaxedWrite(x, 1)
 
-  exhale Init(x)
+  exhale Init(x) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks
 }
 
 
@@ -117,6 +136,7 @@ method thread2(a:Ref, b:Ref, x: Ref)
   b.init := true 
   
   exhale PointsTo(b,8) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks
 } 
 
 

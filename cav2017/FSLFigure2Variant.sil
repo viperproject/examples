@@ -1,3 +1,9 @@
+// This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
+// "A program logic for C11 memory fences", by Doko and Vafeiadis.
+// In this variant, we make use of a single atomic location to signal both threads, instead of one for each ownership transfer 
+// This requires the "splitting" of acquire predicates, achieved automatically in our encoding.
+// The source code for this example is shown in our appendix (Fig. 15)
+
 // PART 1: translation of code
 
 
@@ -35,7 +41,10 @@ method outerScope()
   // join thread 2
   inhale PointsTo(b,8)
   
-  exhale PointsTo(a,43) && PointsTo(b,8)
+  exhale PointsTo(a,43) && PointsTo(b,8) // postcondition
+  exhale forperm[val] y :: false // check for permission leaks - the "forperm" quantifier here 
+  // quantifies over all references to which some permission to the indexed field (val) is held.
+  // By making the body of the quantifier false, we check that *no* such permissions are held.
 }
 
 
@@ -60,6 +69,7 @@ method thread0(a:Ref, b:Ref, x: Ref, y: Ref)
   a.init := true
 
   exhale PointsTo(a,43) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 }
 
 method thread1(a:Ref, b:Ref, x:Ref, y:Ref)
@@ -83,7 +93,8 @@ method thread1(a:Ref, b:Ref, x:Ref, y:Ref)
   // [x]rlx := 1
   relaxedWrite(x, 1)
 
-  exhale Init(x)
+  exhale Init(x) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 }
 
 
@@ -108,6 +119,7 @@ method thread2(a:Ref, b:Ref, x: Ref, y: Ref)
   b.init := true 
   
   exhale PointsTo(b,8) // postcondition
+  exhale forperm[val] z :: false // check for permission leaks
 } 
 
 
