@@ -3,6 +3,8 @@
 // In this version, we leave the code unchanged, but keep the (relatively simple) specification using counting permissions
 // as used in the file RefCountMark2.sil (which itself corresponds to the source code in Fig. 16 of the appendix to our submission)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 
 // PART 1: translation of code
 

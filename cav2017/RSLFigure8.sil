@@ -2,6 +2,8 @@
 // "Relaxed separation logic: a program logic for C11 concurrency", by Vafeiadis and Narayan
 // The source code for this example is shown in the appendix of our submission (Fig. 13)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 // PART 1: translation of code
 
 // The outer scope of the example, which forks and joins the other threads (forking the threads is modelled by exhaling their preconditions; joining by inhaling their postconditions. The order of forking/joining the three threads is not significant, and can be changed)
