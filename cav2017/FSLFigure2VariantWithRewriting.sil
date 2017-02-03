@@ -10,6 +10,7 @@
 // inv(2) entails inv(0)*inv(1), exhales the former AcqConjuncts and inhales the latter (the "false" parameter is used to indicate that we 
 // are handling Acq conjuncts and not those for RMWAcq)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
 
 // PART 1: translation of code
 

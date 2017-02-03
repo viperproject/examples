@@ -2,6 +2,8 @@
 // "A program logic for C11 memory fences", by Doko and Vafeiadis.
 // The source code for this example is shown in the appendix of our submission (Fig. 14)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 // PART 1: translation of code
 
 

@@ -5,6 +5,8 @@
 // The resulting example is a simplified version of that in RefCountMark2.sil, whose source code 
 // is shown in the appendix of our submission (Fig. 16)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 
 // PART 1: translation of code
 

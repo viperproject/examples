@@ -4,6 +4,8 @@
 // This requires the "splitting" of acquire predicates, achieved automatically in our encoding.
 // The source code for this example is shown in our appendix (Fig. 15)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 // PART 1: translation of code
 
 

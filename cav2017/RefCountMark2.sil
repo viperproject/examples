@@ -4,6 +4,8 @@
 // and the atomic increment instruction uses acquire rather than relaxed mode. This enables a specification with counting permissions.
 // The source code for this example is shown in the appendix of our submission (Fig. 16)
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 
 
 // PART 1: translation of code

@@ -3,6 +3,8 @@
 // perhaps with rich ghost state (as introduced in FSL++) a different specification can be written.
 // The source code for the example can be found at https://github.com/facebook/folly/blob/master/folly/RWSpinLock.h
 
+// Note that verification times via the web frontend are considerably longer than with the desktop application.
+
 // PART 1: translation of code
 
 // we pass the real lock location and two ghost locations (ghost and readsGhost) around together, instead of encoding composite objects here.
