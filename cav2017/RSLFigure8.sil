@@ -34,6 +34,7 @@ method outerscope()
 
 // left-hand forked thread
 method thread1(a:Ref, c:Ref)
+  requires realRef(a) && realRef(c) // type information
   requires Uninit(a) && Rel(c,0) // block precondition
   ensures Rel(c,0) // block postcondition
   ensures [true, forperm[val] y :: false] // check for permission leaks - the "forperm" quantifier here 
@@ -45,13 +46,14 @@ method thread1(a:Ref, c:Ref)
 {  
   // non-atomic write
   a.val := 7
-  inhale Init(a)
+  a.init := true
   
   atomicWrite(c,1,true) // release write
 }
 
 // right-hand forked thread
 method thread2(a:Ref, c:Ref)
+  requires realRef(a) && realRef(c) // type information
   requires Acq(c,0) && Init(c) // block precondition
   ensures PointsTo(a,8) // block postcondition  
   ensures [true, forperm[val] y :: false] // check for permission leaks
