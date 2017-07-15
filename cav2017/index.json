@@ -2,7 +2,8 @@
 	"./RSLFigure7": {
 		"name": "RSL Figure 7",
 		"description": "Encoding of Figure 7 Lock example from RSL paper",
-		"category": "CAV'17"
+		"category": "CAV'17",
+		"excludedVerifiers": ["carbon", "carbon-nightly"]
 	},
 
 	"./RSLFigure8": {
