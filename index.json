@@ -59,7 +59,8 @@
   "tree-delete-min/tree_delete_min" : {
     "name": "Iterative Tree Delete (Magic Wands)",
     "description": "Deletion of minimal tree element (VerifyThis@FM2012)",
-    "category": "Viper Examples"
+    "category": "Viper Examples",
+    "excludedVerifiers": ["carbon", "carbon-nightly"]
   },
   
   "parallel-array-replace/parallel-array-replace" : {
@@ -95,7 +96,8 @@
 	"vmcai2016/linked-list-predicates-with-wands": {
 		"name": "Linked-List (Magic Wands)",
 		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions. Note: this example uses a feature which is currently only supported by the default verifier.",
-		"category": "Viper Examples"
+		"category": "Viper Examples",
+		"excludedVerifiers": ["carbon", "carbon-nightly"]
 	},
 
 	"vmcai2016/arraylist-quantified-permissions": {

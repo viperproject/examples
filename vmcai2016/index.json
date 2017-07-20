@@ -20,7 +20,8 @@
 	"linked-list-predicates-with-wands": {
 		"name": "Fig. 7: Linked-List (Magic Wands)",
 		"description": "A variant of the 'Linked-List (Predicates)' example, in which the loop invariant uses a magic wand to bookkeep permissions.",
-		"category": "VMCAI'16"
+		"category": "VMCAI'16",
+		"excludedVerifiers": ["carbon", "carbon-nightly"]
 	},
 
 	"arraylist-quantified-permissions": {
