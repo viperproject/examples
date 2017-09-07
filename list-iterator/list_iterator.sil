@@ -3,18 +3,18 @@
  *
  * This example encodes an iterator over a linked list. The iterator protocol consists of 3 states:
  * "ready" is the initial state
- * "ready for Node_next" indicates that the iterator can advance a step
+ * "ready for next" indicates that the iterator can advance a step
  * "ready for remove" indicates that the Iterator_current element can be removed from the list
  *
  * The protocol followed indicates, that the Iterator_hasNext() method of the iterator in the "ready" state can be used
- * to transition to the "ready for Node_next" state iff there is a Node_next element in the list. Furthermore the iterator's
- * Node_next() method can only be called in the "ready for Node_next" state and transitions the iterator to the "redy for
- * remove" state. From the "ready for remove" state it is possible to transition to the ready state directly or
- * by calling the Iterator_remove() method to remove the Iterator_current item. It is moreover possible to get back access to the
+ * to transition to the "ready for next" state iff there is a next element in the list. Furthermore the iterator's
+ * Iterator_next() method can only be called in the "ready for next" state and transitions the iterator to the "ready for
+ * remove" state. From the "ready for remove" state it is possible to transition to the "ready" state directly or
+ * by calling the Iterator_remove() method to remove the current item. It is moreover possible to get back access to the
  * linked list by giving up access to the iterator in the "ready" state.
  */
 
-//main method used for as an example execution using the Iterator class
+//main method used as an example execution using the Iterator class
 method main(l: Ref)
 requires l!=null && List_state(l)
 ensures  l!=null && List_state(l) {
@@ -180,7 +180,7 @@ ensures  Iterator_ready(this) --* List_state(l) {
     }
 
     /* transferring the remaining 1/2 permissions to this.Iterator_iteratee into the
-     * footprint ensures, that its value cannot be chaned, i.e. stays l.
+     * footprint ensures, that its value cannot be changed, i.e. stays l.
      */
     assert acc(this.Iterator_iteratee)
     fold List_state(l)
