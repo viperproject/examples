@@ -1,66 +1,72 @@
 {
-	"./RSLFigure7": {
-		"name": "RSL Figure 7",
+	"./RSLLock": {
+		"name": "RSL Lock Example",
 		"description": "Encoding of Figure 7 Lock example from RSL paper",
-		"category": "CAV'17"
+		"category": "TACAS'18"
 	},
 
-	"./RSLFigure8": {
-		"name": "RSL Figure 8",
+	"./RelAcqDblMP": {
+		"name": "Release-Acquire Double Message-Passing",
 		"description": "Encoding of Figure 8 message passing example from RSL paper",
-		"category": "CAV'17"
+		"category": "TACAS'18"
 	},
 
-	"./FSLFigure2": {
-		"name": "FSL Figure 2",
+	"./FencesDblMP": {
+		"name": "Fence-Based Double Message-Passing",
 		"description": "Encoding of Figure 2 double message passing example from FSL paper",
-		"category": "CAV'17"
+		"category": "TACAS'18"
 	},
 	
-	"./FSLFigure2Variant": {
-		"name": "FSL Figure 2 single atomic variant",
-		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location and correspondingly more-complex invariant",
-		"category": "CAV'17"
+	"./FencesDblMPSplit": {
+		"name": "Fence-Based Double Message-Passing, Single Atomic Location",
+		"description": "Adaptation of program from Figure 2 of FSL paper (with CAS accesses), using a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"category": "TACAS'18"
 	},
 	
-	"./FSLFigure2VariantWithRewriting": {
-		"name": "FSL Figure 2 single atomic variant with invariant rewriting",
-		"description": "Variant of Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice",
-		"category": "CAV'17"
+	"./FencesDblMPAcqRewriting": {
+		"name": "Fence-Based Double Message-Passing, Single Atomic Location, Invariant Splitting",
+		"description": "Adaptation of program from Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice; exercises invariant rewriting support",
+		"category": "TACAS'18"
 	},
 	
-	"./FSLFigure2VariantWithRelAcq": {
-		"name": "FSL Figure 2 single atomic variant with Rel/Acq accesses instead of relaxed + fences",
-		"description": "Variant of Figure 2 example from FSL paper, using acquire reads instead of compare and swap operations",
-		"category": "CAV'17"
+	"./RelAcqDblMPSplit": {
+		"name": "Release-Acquire Double Message-Passing, Single Atomic Location",
+		"description": "Adaptation of program from Figure 2 of FSL paper, using Release/Acquire accesses, a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"category": "TACAS'18"
 	},
 	
-	"./RefCountMark1": {
-		"name": "Rust Reference Counting version 1",
-		"description": "Encoding of first variant of Rust reference counting example from FSL++ paper. Several stronger access modes allow for a proof using release/acquire",
-		"category": "CAV'17"
+	"./ARCRelAcq": {
+		"name": "Rust Reference Counter (Acquire/Release variant)",
+		"description": "An adaptation of the Rust reference counting example from FSL++ paper. Several strengthened access modes allow for a proof using release/acquire",
+		"category": "TACAS'18"
 	},
 	
-	"./RefCountMark2": {
-		"name": "Rust Reference Counting version 2",
-		"description": "Encoding of second variant of Rust reference counting example from FSL++ paper. A few stronger access modes allow for a proof using atomics and fences",
-		"category": "CAV'17"
+	"./ARCStronger": {
+		"name": "Rust Reference Counter (Fences variant)",
+		"description": "An adaptation of the Rust reference counting example from FSL++ paper. Two strengthened access modes allow for a proof using atomics and fences",
+		"category": "TACAS'18"
 	},
 	
-	"./RefCountMarkOriginalCode": {
-		"name": "Rust Reference Counting version 3",
+	"./ARCRelaxed": {
+		"name": "Rust Reference Counting (original)",
 		"description": "Encoding of original example from FSL++ paper, using same specs as previous example. As expected, the example <b>fails to verify</b> (needs a more-sophisticated specification)",
-		"category": "CAV'17"
+		"category": "TACAS'18"
 	},
 	
 	"./FollyRWSpinlock": {
 		"name": "Facebook Folly Reader-Writer spinlock code",
-		"description": "Encoding of several functions from Facebook's open-source Folly library. Two functions <b>fail to verify</b>, leading to three error messages (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
-		"category": "CAV'17"
+		"description": "Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions <b>fail to verify</b>, leading to three error messages (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
+		"category": "TACAS'18"
 	},
 	
-	"CAV'17" : {
-		"description" : "This webpage contains the full examples referenced in the paper \"Automating Deductive Verification for Weak Memory Programs\" submitted to CAV 2017.",
+	"./FollyRWSpinlockStronger": {
+		"name": "Facebook Folly Reader-Writer spinlock code, two modified functions",
+		"description": "Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions have been re-implemented with slightly less-efficient code whose correctness <b>can</b>, however, be captured by RSL-style atomic invariants.",
+		"category": "TACAS'18"
+	},
+	
+	"TACAS'18" : {
+		"description" : "This webpage contains the full examples referenced in the paper \"Automating Deductive Verification for Weak Memory Programs\" submitted to TACAS 2018.",
 		"isCategory" : true,
 		"excludedVerifiers": ["silicon", "silicon-nightly"]
 	}

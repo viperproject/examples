@@ -44,31 +44,32 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
       fetchUpdate(bits,tmpInt,setFirstBit(setSecondBit(tmpInt,0),0),false, true)
     }
 
-// This (original) implementation of the operation fails to verify:
-// The reason is that the atomic invariants fail to capture the conceptual
-// correlation between *two* successive updates on the atomic location.
-// In FollyRWSpinlockStronger.vpr we give an alternative implementation
-// of this method (with the same specification) whose correctness
-// can be captured by the supported logics 
-  method try_lock_shared(bits: Ref, ghost: Ref, readsGhost: Ref) returns (res: Bool)
-    requires Lock(bits)
-    ensures Lock(bits) && (res ==> readResource)  
+ // This code is not the original, but is an alternative implementation which avoids incrementing the integer unless there are only readers. This makes the reasoning
+ // something that can be captured by RSL invariants, but is a less efficient implementation (both due to interference from other readers, and due to a CAS rather than fetchUpdate)
+ method try_lock_shared_stronger(bits: Ref, ghost: Ref, readsGhost: Ref) returns (res: Bool)
+  requires Lock(bits)
+  ensures Lock(bits) && (res ==> readResource)
+  {
+    var value : Int
+    var newValue : Int
+    
+    while(true) 
+      invariant Lock(bits)
     {
-      var value : Int
-      var tmpIntSet : Set[Int]
-      var tmpRefSet : Set[Ref]
-      fetchUpdateWithVar(bits,value,value + 4,true,true,tmpIntSet,tmpRefSet)
+      atomicRead(bits,value,false)
       if(firstBit(value) == 1 || secondBit(value) == 1) {
-        // FAILS - we cannot prove that we need not give up a read permission here
-        fetchUpdateWithVar(bits,value,value - 4, true,true,tmpIntSet,tmpRefSet) 
         res := false
-        goto return // return false
+        goto return
       } 
-      res := true
-      label return
-    }
-
-
+      CAS(bits,value,value + 4,newValue,true,true) // we increment by 4 only if there are only readers
+      if(newValue == value) {
+        res := true
+        goto return
+      }
+    } 
+      
+  label return
+}
 
 method lock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
   requires Lock(bits)
@@ -79,7 +80,7 @@ method lock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
   while(! success) 
     invariant Lock(bits) && (success ==> readResource)
     {
-      success := try_lock_shared(bits, ghost, readsGhost)
+      success := try_lock_shared_stronger(bits, ghost, readsGhost)
     }
 }
 
@@ -90,18 +91,18 @@ method unlock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
     var tmpValue : Int 
     fetchUpdate(bits,tmpValue,tmpValue - 4,true,true)
   }
-
-// In FollyRWSpinlockStronger.vpr we give an alternative implementation
-// of this method (with the same specification) whose correctness
-// can be captured by the supported logics 
-method unlock_and_lock_shared(bits:Ref, ghost:Ref, readsGhost:Ref)
+  
+method unlock_and_lock_shared_stronger(bits:Ref, ghost:Ref, readsGhost:Ref)
   requires Lock(bits) && exclusiveResource
-  ensures Lock(bits) && readResource // FAILS - cannot capture cumulative effect of updates - why do we still have a read permission, here?
-  {
-    var tmpValue : Int 
-    fetchUpdate(bits,tmpValue,tmpValue + 4,true,true)
-    unlock(bits, ghost, readsGhost) 
-  }
+  ensures Lock(bits) && readResource    
+  {         
+    var tmpValue : Int
+    var tmpIntSet : Set[Int] 
+    var tmpRefSet : Set[Ref] 
+    fetchUpdateWithVar(bits,tmpValue,setSecondBit(tmpValue,0),true,true,tmpIntSet,tmpRefSet) //  deal with upgradeable bit
+    fetchUpdateWithVar(bits,tmpValue,tmpValue + 3,true,true,tmpIntSet,tmpRefSet)
+    //assert tmpValue % 2 == 1 // NOTE: this is an optimisation of the original code! We can prove from the invariant that we must be downgrading the exclusive lock
+  } 
 
 
 
