@@ -66,7 +66,7 @@
 	},
 	
 	"TACAS'18" : {
-		"description" : "This webpage contains the full examples referenced in the paper \"Automating Deductive Verification for Weak Memory Programs\" submitted to TACAS 2018.",
+		"description" : "This webpage contains Viper-encoded examples referenced in the paper \"Automating Deductive Verification for Weak Memory Programs\" submitted to TACAS 2018. See also for <a href=\"viper.ethz.ch/prototype-rsl-encoding\">the prototype tool</a>.",
 		"isCategory" : true,
 		"excludedVerifiers": ["silicon", "silicon-nightly"]
 	}
