@@ -43,6 +43,11 @@ method lock_explicit(x: Ref, z:Ref)
     while(tmp != 1) 
       invariant Lock(x) && (tmp == 1 ==> J(z))
     {
+      while(tmp != 1) 
+        invariant Lock(x)
+      {
+        relaxedReadWithVar(x,tmp,intSet)
+      }
       CASWithVar(x,1,0,tmp,true,false,intSetTwo,refSetTwo)
     } 
   }

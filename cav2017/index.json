@@ -1,67 +1,67 @@
 {
-	"./RSLLock": {
-		"name": "RSL Lock Example",
-		"description": "Encoding of Figure 7 Lock example from RSL paper",
+	"./RSLSpinlock": {
+		"name": "RSL Spinlock Example",
+		"description": "(RSLSpinlock) Encoding of Figure 7 Spinlock example from RSL paper",
 		"category": "TACAS'18"
 	},
 
 	"./RelAcqDblMP": {
 		"name": "Release-Acquire Double Message-Passing",
-		"description": "Encoding of Figure 8 message passing example from RSL paper",
+		"description": "(RelAcqDblMP) Encoding of Figure 8 message passing example from RSL paper",
 		"category": "TACAS'18"
 	},
 
 	"./FencesDblMP": {
 		"name": "Fence-Based Double Message-Passing",
-		"description": "Encoding of Figure 2 double message passing example from FSL paper",
+		"description": "(FencesDblMP) Encoding of Figure 2 double message passing example from FSL paper",
 		"category": "TACAS'18"
 	},
 	
 	"./FencesDblMPSplit": {
 		"name": "Fence-Based Double Message-Passing, Single Atomic Location",
-		"description": "Adaptation of program from Figure 2 of FSL paper (with CAS accesses), using a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"description": "(FencesDblMPSplit) Adaptation of program from Figure 2 of FSL paper (with CAS accesses), using a single atomic location and correspondingly more-complex invariant which must be split between threads",
 		"category": "TACAS'18"
 	},
 	
 	"./FencesDblMPAcqRewriting": {
 		"name": "Fence-Based Double Message-Passing, Single Atomic Location, Invariant Splitting",
-		"description": "Adaptation of program from Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice; exercises invariant rewriting support",
+		"description": "(FencesDblMPAcqRewriting) Adaptation of program from Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice; exercises invariant rewriting support",
 		"category": "TACAS'18"
 	},
 	
 	"./RelAcqDblMPSplit": {
-		"name": "Release-Acquire Double Message-Passing, Single Atomic Location",
-		"description": "Adaptation of program from Figure 2 of FSL paper, using Release/Acquire accesses, a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"name": "Release-Acquire Double Message-Passing, Invariant Splitting",
+		"description": "(RelAcqDblMPSplit) Adaptation of program from Figure 2 of FSL paper, using Release/Acquire accesses, a single atomic location and correspondingly more-complex invariant which must be split between threads",
 		"category": "TACAS'18"
 	},
 	
-	"./ARCRelAcq": {
+	"./RelAcqARC": {
 		"name": "Rust Reference Counter (Acquire/Release variant)",
-		"description": "An adaptation of the Rust reference counting example from FSL++ paper. Several strengthened access modes allow for a proof using release/acquire",
+		"description": "(RelAcqARC) An adaptation of the Rust reference counting example from FSL++ paper. Several strengthened access modes allow for a proof using release/acquire",
 		"category": "TACAS'18"
 	},
 	
 	"./ARCStronger": {
 		"name": "Rust Reference Counter (Fences variant)",
-		"description": "An adaptation of the Rust reference counting example from FSL++ paper. Two strengthened access modes allow for a proof using atomics and fences",
+		"description": "(ARCStronger) An adaptation of the Rust reference counting example from FSL++ paper. Two strengthened access modes allow for a proof using atomics and fences",
 		"category": "TACAS'18"
 	},
 	
 	"./ARCRelaxed": {
-		"name": "Rust Reference Counting (original)",
-		"description": "Encoding of original example from FSL++ paper, using same specs as previous example. As expected, the example <b>fails to verify</b> (needs a more-sophisticated specification)",
+		"name": "Rust Reference Counter (original)",
+		"description": "(ARCRelaxed) Encoding of original example from FSL++ paper, using same specs as previous example. As expected, the example <b>fails to verify</b> (needs a more-sophisticated specification)",
 		"category": "TACAS'18"
 	},
 	
 	"./FollyRWSpinlock": {
 		"name": "Facebook Folly Reader-Writer spinlock code",
-		"description": "Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions <b>fail to verify</b>, leading to three error messages (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
+		"description": "(FollyRWSpinlock) Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions <b>fail to verify</b>, leading to three error messages (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
 		"category": "TACAS'18"
 	},
 	
 	"./FollyRWSpinlockStronger": {
 		"name": "Facebook Folly Reader-Writer spinlock code, two modified functions",
-		"description": "Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions have been re-implemented with slightly less-efficient code whose correctness <b>can</b>, however, be captured by RSL-style atomic invariants.",
+		"description": "(FollyRWSpinlockStronger) Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library. Two functions have been re-implemented with slightly less-efficient code whose correctness <b>can</b>, however, be captured by RSL-style atomic invariants.",
 		"category": "TACAS'18"
 	},
 	
