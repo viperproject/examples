@@ -18,7 +18,7 @@ method outerScope()
   allocNonAtomic(b)
 
   allocAtomic(x, 0, false)
-  allocAtomic(y, 0, false)
+  allocAtomic(y, 1, false)
   
   // [x]rlx := 0
   relaxedWrite(x, 0)
