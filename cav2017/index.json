@@ -60,7 +60,7 @@
 	},
 	
 	"./FollyRWSpinlock_err_mod": {
-		"name": "Facebook Folly Reader-Writer spinlock code (with relacq accesses)",
+		"name": "Facebook Folly Reader-Writer spinlock (relacq)",
 		"description": "(FollyRWSpinlock_err_mod) Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library, simplified to use only relacq accesses (see FollyRWSpinlock_err for the original). Two functions <b>fail to verify</b>, leading to three error messages (as expected with the given specifications, which cannot capture the cumulative effects of multiple atomic updates)",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
@@ -72,7 +72,7 @@
 	},
 	
 	"./FollyRWSpinlockStronger_mod": {
-		"name": "Facebook Folly Reader-Writer spinlock code, two modified functions",
+		"name": "Facebook Folly Reader-Writer spinlock code (relacq), two modified functions",
 		"description": "(FollyRWSpinlockStronger_mod) Encoding of the core reader-lock and writer-lock functions from Facebook's open-source Folly library, simplified to use only relacq accesses (see FollyRWSpinlockStronger for the original). Two functions have been re-implemented with slightly less-efficient code whose correctness <b>can</b>, however, be captured by RSL-style atomic invariants.",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
