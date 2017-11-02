@@ -5,49 +5,49 @@
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 
-	"./RelAcqDblMP": {
-		"name": "Release-Acquire Double Message-Passing",
-		"description": "(RelAcqDblMP) Encoding of Figure 8 message passing example from RSL paper",
+	"./RelAcqMsgPass": {
+		"name": "Release-Acquire Message-Passing",
+		"description": "(RelAcqMsgPass) Encoding of Figure 8 message passing example from RSL paper",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 
-	"./FencesDblMP": {
+	"./FencesDblMsgPass": {
 		"name": "Fence-Based Double Message-Passing",
-		"description": "(FencesDblMP) Encoding of Figure 2 double message passing example from FSL paper",
+		"description": "(FencesDblMsgPass) Encoding of Figure 2 double message passing example from FSL paper",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./FencesDblMPSplit": {
+	"./FencesDblMsgPassSplit": {
 		"name": "Fence-Based Double Message-Passing, Single Atomic Location",
-		"description": "(FencesDblMPSplit) Adaptation of program from Figure 2 of FSL paper (with CAS accesses), using a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"description": "(FencesDblMsgPassSplit) Adaptation of program from Figure 2 of FSL paper (with CAS accesses), using a single atomic location and correspondingly more-complex invariant which must be split between threads",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./FencesDblMPAcqRewriting": {
+	"./FencesDblMsgPassAcqRewrite": {
 		"name": "Fence-Based Double Message-Passing, Single Atomic Location, Invariant Rewriting",
-		"description": "(FencesDblMPAcqRewriting) Adaptation of program from Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice; exercises invariant rewriting support",
+		"description": "(FencesDblMsgPassAcqRewrite) Adaptation of program from Figure 2 example from FSL paper, using a single atomic location with invariant stated such that automatic handling of conjuncts doesn't suffice; exercises invariant rewriting support",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./RelAcqDblMPSplit": {
+	"./RelAcqDblMsgPassSplit": {
 		"name": "Release-Acquire Double Message-Passing, Invariant Splitting",
-		"description": "(RelAcqDblMPSplit) Adaptation of program from Figure 2 of FSL paper, using Release/Acquire accesses, a single atomic location and correspondingly more-complex invariant which must be split between threads",
+		"description": "(RelAcqDblMsgPassSplit) Adaptation of program from Figure 2 of FSL paper, using Release/Acquire accesses, a single atomic location and correspondingly more-complex invariant which must be split between threads",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./RelAcqARC": {
+	"./RelAcqRustARCStronger": {
 		"name": "Rust Reference Counter (Acquire/Release variant)",
-		"description": "(RelAcqARC) An adaptation of the Rust reference counting example from FSL++ paper. Several strengthened access modes allow for a proof using release/acquire",
+		"description": "(RelAcqRustARCStronger) An adaptation of the Rust reference counting example from FSL++ paper. Several strengthened access modes allow for a proof using release/acquire",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./ARCStronger": {
+	"./RustARCStronger": {
 		"name": "Rust Reference Counter (Fences variant)",
 		"description": "(ARCStronger) An adaptation of the Rust reference counting example from FSL++ paper. Two strengthened access modes allow for a proof using atomics and fences",
 		"category": "Viper Encoding of RSL Logics (Examples)"
 	},
 	
-	"./ARCRelaxed": {
+	"./RustARCOriginal_err": {
 		"name": "Rust Reference Counter (original)",
 		"description": "(ARCRelaxed) Encoding of original example from FSL++ paper, using same specs as previous example. As expected, the example <b>fails to verify</b> (needs a more-sophisticated specification)",
 		"category": "Viper Encoding of RSL Logics (Examples)"

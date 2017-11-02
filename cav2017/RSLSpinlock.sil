@@ -1,24 +1,28 @@
 // This example is the hand-encoded version of Figure 7 from the original RSL paper 
 // "Relaxed separation logic: a program logic for C11 concurrency", by Vafeiadis and Narayan
-// The source code for this example is shown in the appendix of our submission (Fig. 12)
 
 // Note that verification times via the web frontend are considerably longer than with the desktop application.
 
 // PART 1: translation of code
-
+// J(z) represents the assertion guarded by the lock
+// Q0(v) := (v == 0 ? true : v == 1 ? J(z) && realRef(z) : false)
+// Lock(x) := Rel(x,Q0) && RMWAcq(x,Q0) && Init(x) && realRef(x)
 method new_lock(z:Ref) returns (x: Ref)
   requires realRef(z) && J(z)
   ensures Lock(x) 
 {
+// x := alloc_RMW(Q0) // for CAS reads
   allocAtomic(x,0,true)
-  atomicWrite(x,1,true)
+// [x]_rel := 1
+  releaseWrite(x,1)
 } 
 
 method unlock(x: Ref, z:Ref)
   requires Lock(x) && realRef(z) && J(z)
   ensures Lock(x) 
 {
-  atomicWrite(x,1,true)
+// [x]_rel := 1
+  releaseWrite(x,1)
 }
 
 method lock(x: Ref, z:Ref)
@@ -26,18 +30,17 @@ method lock(x: Ref, z:Ref)
   ensures realRef(z) && J(z) && Lock(x)
   { 
     var t : Int
-    var intSet : Set[Int]
-    var refSet : Set[Ref]
-    var intSetTwo : Set[Int]
-    var refSetTwo : Set[Ref]
-    CASWithVar(x,1,0,t,true,false,intSet,refSet)
+// t := CAS(x,1,0)_acq
+    CAS(x,1,0,t,true,false)
  
     while(t != 1) 
       invariant Lock(x) && (t == 1 ==> J(z))
     {
       // spin with relaxed reads (no ownership transfer)
-      waitOnRelaxedRead(x,0)
-      CASWithVar(x,1,0,t,true,false,intSetTwo,refSetTwo)
+// while ([x]_rlx == 0) { skip }
+      waitOnRelaxedRead(x,0) 
+// t := CAS(x,1,0)_acq
+      CAS(x,1,0,t,true,false)
     } 
   }
   
@@ -51,15 +54,19 @@ method lock(x: Ref, z:Ref)
 
 // PART 2: invariant definitions + example-specific background definitions
 
+
+// example specifics 
+
+predicate J(z:Ref) // placeholder for assertion guarded by the lock
+// Lock(x) := Rel(x,Q0) && RMWAcq(x,Q0) && Init(x) && realRef(x)
+define Lock(x) realRef(x) && Rel(x,0) && RMWAcq(x,0) && Init(x)
+
+// Q0(v) := (v == 0 ? true : v == 1 ? J(z) && realRef(z) : false)
 define INV0MaybeUp(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeUp(z,!sync)) : false)
 define INV0MaybeDown(v,sync) (v == 0 ? true : v == 1 ? realRef(z) && J(maybeDown(z,!sync)) : false)
 define INV0TempOrMaybeUp(v,sync)   (v == 0 ? true : v == 1 ? realRef(z) && acc(J(maybeUp(z,!sync)),write - min(write,perm(J(temp(z))))) && acc(J(temp(z)),min(write,perm(J(temp(z))))) : false) 
 define INV0Temp(v) (v == 0 ? true : v == 1 ? realRef(z) && J(temp(z)) : false)
 
-// example specifics 
-predicate J(z:Ref) // placeholder for arbitrary assertion
-
-define Lock(x) realRef(x) && Rel(x,0) && RMWAcq(x,0) && Init(x)
 
 define INV1Temp(v) true // not used for this example
 define INV1TempOrMaybeUp(v,sync) true // not used for this example
