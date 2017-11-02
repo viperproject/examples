@@ -6,7 +6,7 @@
 // PLEASE NOTE: We initially developed a variant of this example in which all access modes for atomic operations
 // were simply relacq. In our evaluation table, we inadvertently reported times for that version of the example.
 // The verification outcomes are identical, but the timings were somewhat faster; the correct timing for this
-// example should have been around 20 seconds (i.e. comparable with our other advanced examples)
+// example should have been around 22 seconds (i.e. comparable with our other advanced examples)
 // We will change this entry in the final version of the paper.
 // The version of the code using relacq accesses throughout is in the file FollwRWSpinlock_err_mod, which yields
 // the times reported in the table under FollyRwSpinlock_err.

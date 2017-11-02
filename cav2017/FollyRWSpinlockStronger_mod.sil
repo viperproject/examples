@@ -8,7 +8,7 @@
 // PLEASE NOTE: This version of the example is a variant which all access modes for atomic operations
 // are simply relacq. In our evaluation table, we inadvertently reported times for this version of the example.
 // The verification outcomes are identical, but the timings were somewhat faster; the correct timing for the
-// FollyRWSpinlockStronger example is around 20 seconds (i.e. comparable with our other advanced examples)
+// FollyRWSpinlockStronger example is around 25 seconds (i.e. comparable with our other advanced examples)
 // We will change this entry in the final version of the paper.
 // The version of the code using the corrected access modifiers is in the file FollwRWSpinlockStronger; this one
 // yields the times reported in the table.
