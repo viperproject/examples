@@ -129,8 +129,9 @@ method unlock_and_lock_shared_stronger(bits:Ref, ghost:Ref, readsGhost:Ref)
   ensures Lock(bits) && readResource    
   {         
     var tmpValue : Int // dummy variable only needed because our fetch-update macro always returns a value
+// deal with upgradeable bit (only important for upgradeable mode of the lock)
 // fetch-and-bitwise-and(bits,~(0x2))_rlx
-    fetchUpdate(bits,tmpValue,setSecondBit(tmpValue,0),false,false) //deal with upgradeable bit
+    fetchUpdate(bits,tmpValue,setSecondBit(tmpValue,0),false,false) 
 // fetch-and-increment(bits,3)_rel 
     fetchUpdate(bits,tmpValue,tmpValue + 3,false,true)
     //assert tmpValue % 2 == 1 // NOTE: this is an optimisation of the original code! We can prove from the invariant that we must be downgrading the exclusive lock
