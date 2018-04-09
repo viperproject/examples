@@ -100,7 +100,7 @@
 		"excludedVerifiers": ["carbon", "carbon-nightly"]
 	},
 
-    "list-iterator/list_iterator": {
+    "list-iterator/list-iterator": {
       "name": "List Iterator (Magic Wands)",
       "description": "An iterator protocol, for iterating over a linked list. The protocol has 3 states and some state-transitions are encoded using magic wands. Note: this example uses a feature which is currently only supported by the default verifier.",
       "category": "Viper Examples",
