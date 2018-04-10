@@ -140,11 +140,11 @@ method insert(this: Ref, elem: Int) returns (index: Int)
       index := index + 1
       ptr := ptr.next
 
-      package A --* B {
+      package A(ptr, index) --* B(ptr, index) {
           fold acc(lseg(prev, null))
           apply A(prev, index-1) --* B(prev, index-1)
       }
-
+ 
     }
 
     tmp := new(*)
