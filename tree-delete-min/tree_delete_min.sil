@@ -71,7 +71,7 @@ method tree_delete_min(x: Ref) returns (z: Ref)
       p := p.l
       plvs := vals(p.l)
 
-      package A --* B {
+      package A(p, plvs) --* B {
           fold Tree(p)
           apply A(prevP, prevPlvs) --* B
       }
