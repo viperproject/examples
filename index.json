@@ -4,26 +4,6 @@
 		"isCategory" : true
 	},
 
-  
-  	"verifythis-exercises/exercise1": {
-		"name": "VerifyThis Exercise 1",
-		"description": "Exercise 1 of the Viper Tutorial at VerifyThis 2018.",
-		"category": "Viper Examples"
-	},
-	
-	"verifythis-exercises/exercise2": {
-		"name": "VerifyThis Exercise 2",
-		"description": "Exercise 2 of the Viper Tutorial at VerifyThis 2018.",
-		"category": "Viper Examples"
-	},
-	
-	"verifythis-exercises/exercise3": {
-		"name": "VerifyThis Exercise 3",
-		"description": "Exercise 3 of the Viper Tutorial at VerifyThis 2018.",
-		"category": "Viper Examples"
-	},
-  
-
   "binary-search/binary-search-array" : {
     "name": "Binary Search (Quantified Permissions)",
     "description": "Binary search in a sorted (mutable) array",
