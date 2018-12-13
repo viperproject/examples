@@ -52,6 +52,7 @@ method insertLeft(t:Ref, v:Int) returns (res: Ref)
 method insert(t:Ref, v:Int) returns (res: Ref, pos: Int)
   requires Tree(t)
   ensures Tree(res) 
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures size(res) == old(size(t)) + 1
   ensures 0 <= pos && pos < size(res)
   ensures lookup(res,pos) == v 

@@ -3,7 +3,7 @@ field l: Ref
 field held: Int
 
 method test(this: Ref, e1: Int, e2: Int)
-  ensures [true, forperm[held] r :: false]
+  ensures [true, forperm r: Ref [r.held] :: false]
 {
   // acquire l
   inhale acc(this.l) && acc(this.l.data) && acc(this.changed) && sorted(this.l.data)

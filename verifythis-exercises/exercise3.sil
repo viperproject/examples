@@ -123,7 +123,8 @@ method treeToArray(t:Ref, offset: Int, a:Array)
   requires Tree(t) && offset >= 0 && offset + size(t) <= len(a)
   requires forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val)
   ensures Tree(t) && size(t) == old(size(t))
-  ensures  forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val) && 
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
+  ensures  forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val) &&
     slot(a,i).val == old(lookup(t,i - offset))
   {
     if(t != null) { 
