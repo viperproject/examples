@@ -108,6 +108,7 @@ method pattern_match_exhaustiveness_test(xs: list) {
    * then the corresponding pattern match exhaustiveness check *fails as expected*:
    */
 
+   //:: ExpectedOutput(assert.failed:assertion.false)
    assert    !(is_Nil(xs))
           && !(is_Cons(xs) && let ys == (tail_Cons(xs)) in is_Nil(ys))
           && !(   is_Cons(xs) && let y  == (head_Cons(xs)) in let ys == (tail_Cons(xs)) in is_Cons(ys)

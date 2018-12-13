@@ -77,5 +77,6 @@ method client_failure() {
 	trav_rec(nodes, a)
 
 	/* The assertion is expected to fail because b is in nodes, but b is not reachable from a */
+    //:: ExpectedOutput(assert.failed:assertion.false)
 	assert forall n: Ref :: n in nodes ==> n.is_marked
 }
