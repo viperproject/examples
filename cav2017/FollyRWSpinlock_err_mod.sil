@@ -79,7 +79,8 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
       if(firstBit(value) == 1 || secondBit(value) == 1) {
 // value := fetch-and-increment(bits,-4)_relacq // (was rel in original code)
         // FAILS - we cannot prove that we need not give up a read permission here
-        fetchUpdate(bits,value,value - 4, true,true) 
+        //:: ExpectedOutput(exhale.failed:insufficient.permission)
+        fetchUpdate(bits,value,value - 4, true,true)
         res := false
         goto return // return false
       } 
@@ -116,6 +117,7 @@ method unlock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
 // can be captured by the supported logics 
 method unlock_and_lock_shared(bits:Ref, ghost:Ref, readsGhost:Ref)
   requires Lock(bits) && exclusiveResource
+  //:: ExpectedOutput(postcondition.violated:insufficient.permission)
   ensures Lock(bits) && readResource // FAILS - cannot capture cumulative effect of updates - why do we still have a read permission, here?
   {
     var tmpValue : Int 
