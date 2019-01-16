@@ -58,6 +58,7 @@ method drop(data:Ref, count: Ref, ghost:Ref)
     FENCEAcq
     // deallocate data - modelled as giving up the (full) permission to the location
     // free(data)
+    //:: ExpectedOutput(exhale.failed:insufficient.permission)
     exhale acc(data.val)
   }
 }
