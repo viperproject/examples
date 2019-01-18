@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This is a version of the main example from "Tackling Real-Life Relaxed 
 // Concurrency with FSL++", by Doko and Vafeiadis
 // The example is based on the "ARC" reference counting library for Rust.

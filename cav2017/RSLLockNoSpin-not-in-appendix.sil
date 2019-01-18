@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example is the hand-encoded version of Figure 7 from the original RSL paper 
 // "Relaxed separation logic: a program logic for C11 concurrency", by Vafeiadis and Narayan
 // The source code for this example is shown in the appendix of our submission (Fig. 12)
