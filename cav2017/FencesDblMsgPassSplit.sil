@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
 // "A program logic for C11 memory fences", by Doko and Vafeiadis.
 // In this variant, we make use of a single atomic location to signal both threads, instead of one for each ownership transfer 

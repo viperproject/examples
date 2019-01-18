@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example includes methods taken from the RWSpinlock implementation in the Facebook Folly library.
 // Two methods fail to verify; we believe these to require reasoning which is beyond the scope of the underlying logics, though
 // perhaps with rich ghost state (as introduced in FSL++) a different specification can be written.
@@ -79,7 +81,7 @@ method lock(bits: Ref, ghost: Ref, readsGhost: Ref)
       if(firstBit(value) == 1 || secondBit(value) == 1) {
 // value := fetch-and-increment(bits,-4)_relacq // (was rel in original code)
         // FAILS - we cannot prove that we need not give up a read permission here
-        //:: ExpectedOutput(exhale.failed:insufficient.permission)
+        //:: ExpectedOutput(exhale.failed:assertion.false)
         fetchUpdate(bits,value,value - 4, true,true)
         res := false
         goto return // return false
