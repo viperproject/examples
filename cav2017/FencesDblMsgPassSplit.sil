@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
 // "A program logic for C11 memory fences", by Doko and Vafeiadis.
 // In this variant, we make use of a single atomic location to signal both threads, instead of one for each ownership transfer 
@@ -73,6 +75,7 @@ method thread0(a:Ref, b:Ref, x: Ref)
   
 // v := [a]_NA
   assert acc(a.init) && a.init
+  //:: ExpectedOutput(assignment.failed:insufficient.permission)
   v := a.val
 
 // [a]_NA := v + 1 
@@ -119,6 +122,7 @@ method thread2(a:Ref, b:Ref, x: Ref)
 
 // v := [b]_NA
   assert acc(b.init) && b.init
+  //:: ExpectedOutput(assignment.failed:insufficient.permission)
   v := b.val
 
 // [b]_NA := v + 1

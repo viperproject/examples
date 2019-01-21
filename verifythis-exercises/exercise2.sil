@@ -26,9 +26,10 @@ function lookup(t:Ref, i:Int) : Int
 
 method insertLeft(t:Ref, v:Int) returns (res: Ref)
   requires Tree(t)
-  ensures Tree(res) 
+  ensures Tree(res)
   ensures size(res) == old(size(t)) + 1
   ensures lookup(res,0) == v
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures forall i:Int :: 0 < i && i < size(res) ==> lookup(res,i) == old(lookup(t,i-1))
 {
   if(t != null) {
@@ -52,6 +53,7 @@ method insertLeft(t:Ref, v:Int) returns (res: Ref)
 method insert(t:Ref, v:Int) returns (res: Ref, pos: Int)
   requires Tree(t)
   ensures Tree(res) 
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures size(res) == old(size(t)) + 1
   ensures 0 <= pos && pos < size(res)
   ensures lookup(res,pos) == v 

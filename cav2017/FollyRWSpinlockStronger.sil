@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example includes methods taken from the RWSpinlock implementation in the Facebook Folly library.
 // The two methods try_lock_shared_stronger unlock_and_lock_shared_stronger are reimplementations of the 
 // original versions (found in the FollyRWSpinlock example), as the correctness arguments for the original
