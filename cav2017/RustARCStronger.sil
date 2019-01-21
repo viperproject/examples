@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This is a version of the main example from "Tackling Real-Life Relaxed 
 // Concurrency with FSL++", by Doko and Vafeiadis
 // The example is based on the "ARC" reference counting library for Rust.
@@ -58,6 +60,7 @@ method drop(data:Ref, count: Ref, ghost:Ref)
     FENCEAcq
     // deallocate data - modelled as giving up the (full) permission to the location
     // free(data)
+    //:: ExpectedOutput(exhale.failed:insufficient.permission)
     exhale acc(data.val)
   }
 }

@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This example is the hand-encoded version of Figure 2 from the original FSL paper 
 // "A program logic for C11 memory fences", by Doko and Vafeiadis.
 // The source code for this example is shown in the appendix of our submission (Fig. 14)
@@ -70,6 +72,7 @@ method thread0(a:Ref, b:Ref, x: Ref, y: Ref)
 
 // v := [a]_NA
   assert acc(a.init) && a.init
+  //:: ExpectedOutput(assignment.failed:insufficient.permission)
   v := a.val
 
 // [a]_NA := v + 1 
@@ -118,6 +121,7 @@ method thread2(a:Ref, b:Ref, x: Ref, y: Ref)
 
 // v := [b]_NA
   assert acc(b.init) && b.init
+  //:: ExpectedOutput(assignment.failed:insufficient.permission)
   v := b.val
 
 // [b]_NA := v + 1

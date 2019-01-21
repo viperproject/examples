@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 // This is a version of the main example from "Tackling Real-Life Relaxed 
 // Concurrency with FSL++", by Doko and Vafeiadis.
 // The example is based on the "ARC" reference counting library for Rust.
@@ -34,6 +36,7 @@ method new_method(v : Int) returns (data: Ref, count: Ref, ghost: Ref)
   data.init := true
   
 // [count]_rlx := 1
+  //:: ExpectedOutput(exhale.failed:insufficient.permission)
   relaxedWrite(count,1)  // FAILS as expected - the specification is too weak to explain why this should work for a relaxed write
 }
 
@@ -57,12 +60,14 @@ method drop(data:Ref, count: Ref, ghost:Ref)
     FENCEAcq
     // deallocate data - modelled as giving up the (full) permission to the location
     // free(data)
+    //:: ExpectedOutput(exhale.failed:insufficient.permission)
     exhale acc(data.val)
   }
 }
 
 method clone(data:Ref, count: Ref, ghost:Ref)
   requires ARC(data,count,ghost)
+  //:: ExpectedOutput(postcondition.violated:insufficient.permission)
   ensures ARC(data,count,ghost) && ARC(data,count,ghost) // FAILS as expected - the specification is too weak to explain why this should work for a relaxed fetch/update
 {
   var t: Int

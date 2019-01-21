@@ -1,3 +1,5 @@
+//:: IgnoreFile(/silicon/issue/364/)
+
 /*****************************************************************
  * List Nodes
  *****************************************************************/
@@ -191,7 +193,7 @@ field held: Int
 field changed: Bool
 
 method test(lock: Ref)
-  ensures [true, forperm[held] r :: false]
+  ensures [true, forperm r: Ref [r.held] :: false]
 {
   /* Acquire lock (without deadlock checking) */
   inhale acc(List(lock)) && acc(lock.held) && acc(lock.changed)
