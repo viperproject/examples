@@ -32,7 +32,6 @@ method insertLeft(t:Ref, v:Int) returns (res: Ref)
   ensures Tree(res)
   ensures size(res) == old(size(t)) + 1
   ensures lookup(res,0) == v
-  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures forall i:Int :: 0 < i && i < size(res) ==> lookup(res,i) == old(lookup(t,i-1))
 {
   if(t != null) {
@@ -60,7 +59,6 @@ method insert(t:Ref, v:Int) returns (res: Ref, pos: Int)
   ensures 0 <= pos && pos < size(res)
   ensures lookup(res,pos) == v
   ensures forall i:Int :: 0 <= i && i < pos ==> lookup(res,i) == old(lookup(t,i))
-  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures forall i:Int :: pos < i && i < size(res) ==> lookup(res,i) == old(lookup(t,i-1))
 {
   if(t != null) {
@@ -127,7 +125,7 @@ method treeToArray(t:Ref, offset: Int, a:Array)
   requires Tree(t) && offset >= 0 && offset + size(t) <= len(a)
   requires forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val)
   ensures Tree(t) && size(t) == old(size(t))
-  //:: ExpectedOutput(postcondition.violated:assertion.false)
+  //:: UnexpectedOutput(postcondition.violated:assertion.false, /silicon/issue/372/)
   ensures  forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val) &&
     slot(a,i).val == old(lookup(t,i - offset))
   {
