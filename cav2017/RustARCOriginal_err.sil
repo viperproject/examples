@@ -60,7 +60,7 @@ method drop(data:Ref, count: Ref, ghost:Ref)
     FENCEAcq
     // deallocate data - modelled as giving up the (full) permission to the location
     // free(data)
-    //:: ExpectedOutput(exhale.failed:insufficient.permission)
+    //:: UnexpectedOutput(exhale.failed:insufficient.permission, /carbon/issue/269/)
     exhale acc(data.val)
   }
 }
@@ -123,8 +123,6 @@ define INV2MaybeDown(v,sync) true  // not used for this example
 
 
 // Part 3: standard background definitions (common for all examples)
-define min(a,b) (a < b ? a : b)
-
 method havocedInt() returns (x:Int)
 method havocedBool() returns (x:Bool)
 method havocedRefSet() returns (x:Set[Ref])
