@@ -54,9 +54,9 @@ method insertLeft(t:Ref, v:Int) returns (res: Ref)
 method insert(t:Ref, v:Int) returns (res: Ref, pos: Int)
   requires Tree(t)
   ensures Tree(res)
-  //:: UnexpectedOutput(postcondition.violated:assertion.false, /silicon/issue/372/)
-  ensures size(res) == old(size(t)) + 1
-  ensures 0 <= pos && pos < size(res)
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
+  ensures size(res) == old(size(t)) + 1 // This only fails if the code bellow is not filled (line 67),
+  ensures 0 <= pos && pos < size(res)   // which is expected to be done as part of the exercise.
   ensures lookup(res,pos) == v 
   ensures forall i:Int :: 0 <= i && i < pos ==> lookup(res,i) == old(lookup(t,i))
   ensures forall i:Int :: pos < i && i < size(res) ==> lookup(res,i) == old(lookup(t,i-1))

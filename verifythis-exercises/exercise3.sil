@@ -125,10 +125,10 @@ method treeToArray(t:Ref, offset: Int, a:Array)
   requires Tree(t) && offset >= 0 && offset + size(t) <= len(a)
   requires forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val)
   ensures Tree(t) && size(t) == old(size(t))
-  //:: UnexpectedOutput(postcondition.violated:assertion.false, /silicon/issue/372/)
+  //:: ExpectedOutput(postcondition.violated:assertion.false)
   ensures  forall i : Int :: offset <= i && i < offset + size(t) ==> acc(slot(a,i).val) &&
-    slot(a,i).val == old(lookup(t,i - offset))
-  {
+    slot(a,i).val == old(lookup(t,i - offset))  // This only fails if the code bellow is not filled (line 133),
+  {                                             // which is expected to be done as part of the exercise.
     if(t != null) { 
       // <-- write your code here to read off the tree values into the array, starting at slot "offset"
       // remember, an array access a[j] is represented by slot(a,j).val
