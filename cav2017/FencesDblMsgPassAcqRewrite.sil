@@ -79,7 +79,7 @@ method thread0(a:Ref, b:Ref, x: Ref)
   
 // v := [a]_NA
   assert acc(a.init) && a.init
-  //:: ExpectedOutput(assignment.failed:insufficient.permission)
+  //:: UnexpectedOutput(assignment.failed:insufficient.permission, /carbon/issue/269/)
   v := a.val
 
 // [a]_NA := v + 1 
@@ -126,7 +126,7 @@ method thread2(a:Ref, b:Ref, x: Ref)
 
 // v := [b]_NA
   assert acc(b.init) && b.init
-  //:: ExpectedOutput(assignment.failed:insufficient.permission)
+  //:: UnexpectedOutput(assignment.failed:insufficient.permission, /carbon/issue/269/)
   v := b.val
 
 // [b]_NA := v + 1
