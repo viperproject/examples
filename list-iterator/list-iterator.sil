@@ -1,5 +1,4 @@
 //:: IgnoreFile(/carbon/issue/261/)
-//:: IgnoreFile(/silver/issue/275/)
 
 /* This example is based on the list iterator example, created by Blom and Huisman, which is available at
  * https://github.com/utwente-fmt/vercors/blob/master/examples/witnesses/ListIterator.java.
@@ -313,8 +312,9 @@ requires Node_reverse(this) {
 // finds the first node of a list
 function Node_first(this: Ref): Ref
 requires Node_reverse(this)
-decreases * {
-  unfolding Node_reverse(this) in (this.Node_prev==null) ? this : Node_first(this.Node_prev)}
+{
+  unfolding Node_reverse(this) in (this.Node_prev==null) ? this : Node_first(this.Node_prev)
+}
 
 // create a new node
 method Node_new(v: Int, n: Ref) returns (this: Ref)
