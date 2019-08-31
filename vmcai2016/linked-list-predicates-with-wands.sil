@@ -1,12 +1,10 @@
-//:: IgnoreFile(/silicon/issue/364/)
-//:: IgnoreFile(/carbon/issue/261/)
 
 /*****************************************************************
  * List Nodes
  *****************************************************************/
 
 field data: Int
-field next: Ref
+field next: Ref 
 
 predicate lseg(this: Ref, end: Ref)
 {
