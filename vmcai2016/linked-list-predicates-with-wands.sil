@@ -84,6 +84,7 @@ method insert(this: Ref, elem: Int) returns (index: Int)
   requires acc(List(this))
   ensures acc(List(this))
   ensures 0 <= index && index <= |old(content(this))|
+  //:: UnexpectedOutput(postcondition.violated:assertion.false, /carbon/issue/269/)
   ensures content(this) == old(content(this))[0..index] ++ Seq(elem) ++ old(content(this))[index..]
 {
   var tmp: Ref
@@ -141,6 +142,7 @@ method insert(this: Ref, elem: Int) returns (index: Int)
       index := index + 1
       ptr := ptr.next
 
+      //:: UnexpectedOutput(package.failed:assertion.false, /carbon/issue/269/)
       package A(ptr, index) --* B(ptr, index) {
           fold acc(lseg(prev, null))
           apply A(prev, index-1) --* B(prev, index-1)
