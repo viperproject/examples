@@ -1,4 +1,5 @@
 //:: IgnoreFile(/silicon/issue/364/)
+//:: IgnoreFile(/carbon/issue/280/)
 
 // This is a version of the main example from "Tackling Real-Life Relaxed 
 // Concurrency with FSL++", by Doko and Vafeiadis

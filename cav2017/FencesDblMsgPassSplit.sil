@@ -1,4 +1,5 @@
 //:: IgnoreFile(/silicon/issue/364/)
+//:: IgnoreFile(/carbon/issue/280/)
 
 // This example is a variant of the FSLFigure2 example, which is a hand-encoded version of Figure 2 from the FSL paper 
 // "A program logic for C11 memory fences", by Doko and Vafeiadis.
