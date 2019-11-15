@@ -1,3 +1,5 @@
+//:: IgnoreFile(/carbon/issue/280/)
+
 field data: Seq[Int]
 
 define sorted(s)
