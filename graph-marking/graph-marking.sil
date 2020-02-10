@@ -1,4 +1,3 @@
-//:: IgnoreFile(/silicon/issue/374/)
 field left: Ref
 field right: Ref
 field is_marked: Bool
