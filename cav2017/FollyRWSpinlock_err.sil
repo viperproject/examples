@@ -99,7 +99,7 @@ method lock_shared(bits: Ref, ghost:Ref, readsGhost:Ref)
 {
   var count : Int := 0
   var success : Bool := false
-  while(! success) 
+  while(!success) 
     invariant Lock(bits) && (success ==> readResource)
     {
       success := try_lock_shared(bits, ghost, readsGhost)
